@@ -1,13 +1,13 @@
 CXX=g++
 CXXOPTIMIZE= -O2
-CXXFLAGS= -g -Wall -std=c++0x $(CXXOPTIMIZE)
+CXXFLAGS= -g -Wall -pthread -std=c++0x $(CXXOPTIMIZE)
 GTEST_DIR=googletest/googletest
-$SERVERCLASSES=
+SERVERCLASSES=config_parser.cc
 
 all: webserver config_parser config_parser_test
 
 webserver: $(SERVERCLASSES)
-	$(CXX) -o $@ $^ $(CXXFLAGS) $@.cc
+	$(CXX) -o $@ $^ $@.cc $(CXXFLAGS) -lboost_system
 
 config_parser: config_parser.cc config_parser_main.cc
 	$(CXX) -o $@ $^ $(CXXFLAGS)
