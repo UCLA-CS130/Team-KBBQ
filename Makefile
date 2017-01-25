@@ -2,7 +2,7 @@ CXX=g++
 CXXOPTIMIZE= -O2
 CXXFLAGS= -g -Wall -pthread -std=c++0x $(CXXOPTIMIZE)
 GTEST_DIR=googletest/googletest
-SERVERCLASSES=config_parser.cc Webserver.h webserver_main.cc
+SERVERCLASSES=config_parser.cc Webserver.h Webserver_main.cc
 
 all: Webserver config_parser config_parser_test
 

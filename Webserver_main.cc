@@ -1,11 +1,11 @@
 // Based on Boost library blocking_tcp_echo_server example.
 // http://www.boost.org/doc/libs/1_55_0/doc/html/boost_asio/example/cpp11/echo/blocking_tcp_echo_server.cpp
 
+#include <boost/asio.hpp>
 #include <cstdlib>
 #include <iostream>
 #include <thread>
 #include <utility>
-#include <boost/asio.hpp>
 #include "Webserver.h"
 
 int main(int argc, char* argv[]) {
@@ -17,9 +17,10 @@ int main(int argc, char* argv[]) {
             return 1;
         }
 
+        //Create server object and parse config file
         Webserver server;
         server.parse_config(argv[1]);
-        
+
         boost::asio::io_service io_service;
         // Start the server.
         server.run_server(io_service);

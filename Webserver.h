@@ -11,9 +11,7 @@ public:
 	void run_server(boost::asio::io_service& io_service);
 	void session(boost::asio::ip::tcp::socket sock); 
 
-
 private:
-	// boost::asio::io_service io_service;
 	NginxConfigParser config_parser;
     NginxConfig config_out;
     unsigned short port;

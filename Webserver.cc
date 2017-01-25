@@ -1,10 +1,9 @@
 #include "Webserver.h"
-
+#include <boost/asio.hpp>
 #include <cstdlib>
-#include <utility>
 #include <iostream>
 #include <thread>
-#include <boost/asio.hpp>
+#include <utility>
 
 const int max_length = 4096;
 
@@ -23,7 +22,6 @@ bool Webserver::parse_config(const char* file_name){
 
 	return result;
 }
-
 
 
 void Webserver::session(tcp::socket sock) {
