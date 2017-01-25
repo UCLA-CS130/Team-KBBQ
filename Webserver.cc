@@ -22,6 +22,7 @@ bool Webserver::parse_config(const char* file_name){
 	} else {
 	    std::cerr << "Error: Could not parse config file.\n";
 	}
+    printf("Parsed config file.\n\n");
 
 	return result;
 }
@@ -33,6 +34,8 @@ void Webserver::session(tcp::socket sock) {
             char data[max_length];
 
             boost::system::error_code error;
+
+            printf("Connected to client.\n\n");
 
             // Read the request.
             size_t length = sock.read_some(boost::asio::buffer(data), error);
@@ -50,6 +53,7 @@ void Webserver::session(tcp::socket sock) {
             // Send response header and echo received request.
             boost::asio::write(sock, boost::asio::buffer(header, header_length));
             boost::asio::write(sock, boost::asio::buffer(data, length));
+            printf("Received GET Request:\n%s\n\n", data);
             return;
         }
     }
