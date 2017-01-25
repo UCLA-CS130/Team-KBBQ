@@ -1,6 +1,3 @@
-// Based on Boost library blocking_tcp_echo_server example.
-// http://www.boost.org/doc/libs/1_55_0/doc/html/boost_asio/example/cpp11/echo/blocking_tcp_echo_server.cpp
-
 #include <boost/asio.hpp>
 #include <cstdlib>
 #include <iostream>
