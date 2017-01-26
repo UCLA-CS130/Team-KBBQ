@@ -1,15 +1,24 @@
 #include <cstdlib>
 #include <iostream>
+#include <istream>
+#include <ostream>
+#include <string>
+#include <iterator>
 #include <boost/asio.hpp>
+#include "Webserver.h"
 #include "gtest/gtest.h"
-#include "webserver.cc"
 
+using boost::asio::ip::tcp;
+    
 TEST(WebserverTest, run_serverTest) {
-	  boost::asio::io_service io_service;
-	  Webserver server;
-	  server.run_server(io_service, 8080);
-	  tcp::resolver resolver (io_service);
-	  tcp::resolver::query query(localhost:8080, "asdf");
+    //Webserver server;
+    //server.parse_config("config");  
+    
+    boost::asio::io_service io_service;  
+    //server.run_server(io_service);
+
+    tcp::resolver resolver (io_service);
+    tcp::resolver::query query("localhost", "8080");
     tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
 
     tcp::socket socket(io_service);
@@ -24,11 +33,18 @@ TEST(WebserverTest, run_serverTest) {
 
     // Read the response.
     boost::asio::streambuf response;
-    boost::asio::read(socket, response);
+    boost::system::error_code error;
+    std::string answer;
 
-    std::istream response_stream(&response);
-    std::string response;
-    response_stream >> response;
+    while (boost::asio::read(socket, response, boost::asio::transfer_at_least(1), error)) {
+        std::istream response_stream(&response);
+        std::string s(std::istreambuf_iterator<char>(response_stream), {});
+        answer = s;
+    }
 
-    EXPECT_EQ("HTTP/1.0 200 OK\r\nContent-type: text/plain\r\n\r\nasdfasdf", response);
+    if (error != boost::asio::error::eof) {
+        throw boost::system::system_error(error);
+    }
+
+    EXPECT_EQ("HTTP/1.0 200 OK\r\nContent-type: text/plain\r\n\r\nasdfasdf", answer);
 }
