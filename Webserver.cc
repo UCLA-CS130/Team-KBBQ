@@ -31,14 +31,12 @@ bool Webserver::parse_config(const char* file_name){
 void Webserver::session(tcp::socket sock) {
     try {
         for (;;) {
-            char data[max_length];
+            char request[max_length];
 
             boost::system::error_code error;
 
-            printf("Connected to client.\n\n");
-
             // Read the request.
-            size_t length = sock.read_some(boost::asio::buffer(data), error);
+            size_t request_length = sock.read_some(boost::asio::buffer(request), error);
             if (error == boost::asio::error::eof) {
                 break; // Connection closed cleanly by peer. 
             }
@@ -46,20 +44,29 @@ void Webserver::session(tcp::socket sock) {
                 throw boost::system::system_error(error); // Some other error.
             }
 
-            // Create the response header.
-            const char* header = "HTTP/1.0 200 OK\r\nContent-type: text/plain\r\n\r\n";
-            int header_length = std::strlen(header);
+            printf("Connected to client.\n\n");
+            printf("Received GET Request:\n%s\n\n", request);
+
+            // Create response
+            std::vector<char> response = create_response(request, request_length);
 
             // Send response header and echo received request.
-            boost::asio::write(sock, boost::asio::buffer(header, header_length));
-            boost::asio::write(sock, boost::asio::buffer(data, length));
-            printf("Received GET Request:\n%s\n\n", data);
+            boost::asio::write(sock, boost::asio::buffer(response));
             return;
         }
     }
     catch (std::exception& e) {
         std::cerr << "Exception in thread: " << e.what() << "\n";
     }
+}
+
+std::vector<char> Webserver::create_response(char* request, size_t request_length) {
+    std::vector<char> response;
+    std::string response_header = "HTTP/1.0 200 OK\r\nContent-type: text/plain\r\n\r\n";
+
+    response.insert(response.end(), response_header.begin(), response_header.end());
+    response.insert(response.end(), request, request + request_length);
+    return response;
 }
 
 void Webserver::run_server(boost::asio::io_service& io_service) {
