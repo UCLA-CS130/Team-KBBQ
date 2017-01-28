@@ -9,7 +9,8 @@ class Webserver {
 public:
 	bool parse_config(const char* file_name);
 	void run_server(boost::asio::io_service& io_service);
-	void session(boost::asio::ip::tcp::socket sock); 
+	void session(boost::asio::ip::tcp::socket sock);
+    std::vector<char> create_response(char* request, size_t request_length);
 
 private:
 	NginxConfigParser config_parser;
