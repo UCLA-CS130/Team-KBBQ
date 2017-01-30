@@ -32,7 +32,10 @@ coverage: COVFLAGS += -fprofile-arcs -ftest-coverage
 coverage: Webserver_test config_parser_test
 	./Webserver_test && gcov -r Webserver.cc; ./config_parser_test && gcov -r config_parser.cc
 
+test:
+	python3 integration_test.py
+
 clean:
 	rm -rf *.o *~ *.gch *.swp *.dSYM *.gcno *.gcda *.gcov Webserver Webserver_test config_parser config_parser_test *.tar.gz
 
-.PHONY: all clean
+.PHONY: all clean test coverage
