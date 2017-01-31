@@ -1,3 +1,4 @@
+#include <fstream>
 #include "gtest/gtest.h"
 #include "config_parser.h"
 
@@ -48,4 +49,12 @@ TEST_F(NginxStringConfigTest, MultipleBraces) {
 // Mismatched curly braces
 TEST_F(NginxStringConfigTest, MismatchedBraces) {
 	ASSERT_FALSE(ParseString("server { listen 80; something { some statement; } "));
+}
+
+//Checks that a large config is parsed correctly
+//Code taken from https://www.nginx.com/resources/wiki/start/topics/examples/full/
+TEST(NginxConfigParserTest, FullExampleConfig) {
+	NginxConfigParser parser;
+	NginxConfig out_config_;
+	EXPECT_TRUE(parser.Parse("fullex_config", &out_config_));
 }
