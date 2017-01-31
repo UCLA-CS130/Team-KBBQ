@@ -20,7 +20,7 @@ config_parser: config_parser_main.cc
 	$(CXX) -o $@ $^ $@.cc $(CXXFLAGS)
 
 config_parser_test: config_parser.cc $(GTEST_CLASSES)
-	$(CXX) -o $@ $^ $@.cc $(GTEST_FLAGS)
+	$(CXX) -o $@ $^ $@.cc $(GTEST_FLAGS) $(COVFLAGS)
 
 libgtest.a: gtest-all.o
 	ar -rv $@ $^
@@ -33,6 +33,6 @@ coverage: Webserver_test config_parser_test
 	./Webserver_test && gcov -r Webserver.cc; ./config_parser_test && gcov -r config_parser.cc
 
 clean:
-	rm -rf *.o *~ *.gch *.swp *.dSYM *.gcno *.gcda *.gcov Webserver Webserver_test config_parser config_parser_test *.tar.gz
+	rm -rf *.o *.a *~ *.gch *.swp *.dSYM *.gcno *.gcda *.gcov Webserver Webserver_test config_parser config_parser_test *.tar.gz
 
 .PHONY: all clean
