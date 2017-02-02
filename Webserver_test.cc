@@ -3,6 +3,8 @@
 #include "config_parser.h"
 #include <fstream>
 #include <iostream>
+#include <cstdio>
+
 
 //Correct response is made with simple input
 TEST(CreateResponseTest, Simple){
@@ -95,14 +97,15 @@ TEST(ValidParseConfigTest, Simple){
 
 	//Create necessary classes
 	Webserver server;
-	std::ofstream config_file("config"); 
-
+	std::ofstream config_file("config_test"); 
+	
 	//assert file can be opened
     ASSERT_TRUE(config_file);
     config_file << "port 8080;";
     config_file.close();
 
-	bool parsed_config = server.parse_config("config");	
+	bool parsed_config = server.parse_config("config_test");
+	std::remove("config_test");	
 
 	//assert that config was loaded correctly
 	ASSERT_TRUE(parsed_config);	
@@ -114,14 +117,15 @@ TEST(InvalidParseConfigTest, Simple){
 
 	//Create necessary classes
 	Webserver server;
-	std::ofstream config_file("config"); 
+	std::ofstream config_file("config_test"); 
 
 	//assert file can be opened
     ASSERT_TRUE(config_file);
     config_file << "listen 8080;";
     config_file.close();
 	
-	bool parsed_config = server.parse_config("config");
+	bool parsed_config = server.parse_config("config_test");
+	std::remove("config_test");	
 	
 	//assert that parse failed
 	ASSERT_FALSE(parsed_config);	
