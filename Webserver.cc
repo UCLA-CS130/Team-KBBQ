@@ -22,7 +22,7 @@ bool Webserver::load_configs(NginxConfig config) {
         }
 
         // Parse statements
-        if (parent_statement->tokens_.size() != 2) {
+        else if (parent_statement->tokens_.size() != 2) {
             std::cerr << "Error: Invalid config syntax.\n";
             std::cerr << parent_statement->ToString(1);
             return false;
@@ -39,14 +39,14 @@ bool Webserver::parse_config(const char* file_name){
 	if (config_parser.Parse(file_name, &config_out)) {
         // Put configs into map
         if (load_configs(config_out)) {
-            std::unordered_map<std::string, std::string>::const_iterator port_itr = config_attributes.find("port");
-            // Get the port number.
-            if (port_itr != config_attributes.end()) {
-                port = std::stoi(port_itr->second);
-            } else {
+            std::string port_str = get_config("port");
+            
+            if (port_str == "") {
                 std::cerr << "Error: No port found.\n";
                 return false;
             }
+
+            port = std::stoi(port_str);
         } else {
             return false;
         }
@@ -59,7 +59,16 @@ bool Webserver::parse_config(const char* file_name){
         return false;
 	}
 }
-
+ 
+std::string Webserver::get_config(std::string attribute){
+    std::unordered_map<std::string, std::string>::const_iterator found = config_attributes.find(attribute);
+    // Get the attribute value
+    if (found != config_attributes.end()) {
+        return found->second;
+    } else {
+        return "";
+    }
+}
 
 void Webserver::session(tcp::socket sock) {
     try {
