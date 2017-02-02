@@ -12,19 +12,52 @@ const int max_length = 4096;
 
 using boost::asio::ip::tcp;
 
-bool Webserver::parse_config(const char* file_name){
-	
-	bool result = config_parser.Parse(file_name, &config_out);
-	// Try to parse the config file.
-	if (result) {
-	    // Get the port number.
-	    port = std::stoi(config_out.statements_[0]->tokens_[1]);
-	} else {
-	    std::cerr << "Error: Could not parse config file.\n";
-	}
-    printf("Parsed config file.\n\n");
+bool Webserver::load_configs(NginxConfig config) {
+    for (size_t i = 0; i < config.statements_.size(); i++) {
+        std::shared_ptr<NginxConfigStatement> parent_statement = config.statements_[i];
 
-	return result;
+        if (parent_statement->child_block_.get()) {
+            // Recurse on child block
+            load_configs(*(parent_statement->child_block_.get()));
+        }
+
+        // Parse statements
+        if (parent_statement->tokens_.size() != 2) {
+            std::cerr << "Error: Invalid config syntax.\n";
+            std::cerr << parent_statement->ToString(1);
+            return false;
+        } else {
+            config_attributes[parent_statement->tokens_[0]] = parent_statement->tokens_[1];
+        }
+    }
+
+    return true;
+}
+
+bool Webserver::parse_config(const char* file_name){
+	// Try to parse the config file.
+	if (config_parser.Parse(file_name, &config_out)) {
+        // Put configs into map
+        if (load_configs(config_out)) {
+            std::unordered_map<std::string, std::string>::const_iterator port_itr = config_attributes.find("port");
+            // Get the port number.
+            if (port_itr != config_attributes.end()) {
+                port = std::stoi(port_itr->second);
+            } else {
+                std::cerr << "Error: No port found.\n";
+                return false;
+            }
+        } else {
+            return false;
+        }
+
+        printf("Parsed config file.\n\n");
+        return true;
+	}
+    else {
+	    std::cerr << "Error: Could not parse config file.\n";
+        return false;
+	}
 }
 
 
