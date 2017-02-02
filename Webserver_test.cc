@@ -36,7 +36,6 @@ TEST_F(LoadConfigTest, ValidConfig){
 	std::stringstream config_stream("port 8080;");
 	parser.Parse(&config_stream, &out_config);
 	
-	//call load_configs function
 	bool loaded_config = server.load_configs(out_config);
 	std::string port = server.get_config("port");
 
@@ -53,7 +52,6 @@ TEST_F(LoadConfigTest, NestedLoadConfigTest){
 	std::stringstream config_stream("server { port 8080; }");
 	parser.Parse(&config_stream, &out_config);
 	
-	//call load_configs function
 	bool loaded_config = server.load_configs(out_config);
 	std::string port = server.get_config("port");
 
@@ -70,7 +68,6 @@ TEST_F(LoadConfigTest, InvalidConfig){
 	std::stringstream config_stream("port;");
 	parser.Parse(&config_stream, &out_config);
 	
-	//call load_configs function
 	bool loaded_config = server.load_configs(out_config);
 
 	//assert that config was loaded correctly
@@ -85,11 +82,9 @@ TEST_F(LoadConfigTest, EmptyConfig){
 	std::stringstream config_stream("listen 8080;");
 	parser.Parse(&config_stream, &out_config);
 	
-	//call load_configs function
 	bool loaded_config = server.load_configs(out_config);
 	std::string port = server.get_config("port");
 
-	
 	ASSERT_TRUE(loaded_config);
 	EXPECT_EQ("", port);
 	
@@ -102,13 +97,12 @@ TEST(ValidParseConfigTest, Simple){
 	Webserver server;
 	std::ofstream config_file("config"); 
 
+	//assert file can be opened
     ASSERT_TRUE(config_file);
     config_file << "port 8080;";
     config_file.close();
-	
-	//create a config
-	bool parsed_config = server.parse_config("config");
-	
+
+	bool parsed_config = server.parse_config("config");	
 
 	//assert that config was loaded correctly
 	ASSERT_TRUE(parsed_config);	
@@ -122,15 +116,14 @@ TEST(InvalidParseConfigTest, Simple){
 	Webserver server;
 	std::ofstream config_file("config"); 
 
+	//assert file can be opened
     ASSERT_TRUE(config_file);
     config_file << "listen 8080;";
     config_file.close();
 	
-	//create a config
 	bool parsed_config = server.parse_config("config");
 	
-
-	//assert that config was loaded correctly
+	//assert that parse failed
 	ASSERT_FALSE(parsed_config);	
 }
 
