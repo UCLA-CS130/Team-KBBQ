@@ -8,8 +8,6 @@
 #include <thread>
 #include <utility>
 
-const int max_length = 4096;
-
 using boost::asio::ip::tcp;
 
 bool Webserver::load_configs(NginxConfig config, std::string parent_name, int inside_block) {
@@ -103,21 +101,12 @@ std::string Webserver::get_dir_config(std::string attribute){
 void Webserver::session(tcp::socket sock) {
     try {
         for (;;) {
-            char request[max_length];
-
-            boost::system::error_code error;
+            boost::asio::streambuf request;
 
             // Read the request.
-            size_t request_length = sock.read_some(boost::asio::buffer(request), error);
-            if (error == boost::asio::error::eof) {
-                break; // Connection closed cleanly by peer. 
-            }
-            else if (error) {
-                throw boost::system::system_error(error); // Some other error.
-            }
+            size_t request_length = boost::asio::read_until(sock, request, "\r\n\r\n");
 
             printf("Connected to client.\n\n");
-            printf("Received GET Request:\n%s\n\n", request);
 
             // Create response
             std::vector<char> response = create_response(request, request_length);
@@ -132,12 +121,13 @@ void Webserver::session(tcp::socket sock) {
     }
 }
 
-std::vector<char> Webserver::create_response(char* request, size_t request_length) {
+std::vector<char> Webserver::create_response(boost::asio::streambuf& request, size_t request_length) {
     std::vector<char> response;
     std::string response_header = "HTTP/1.0 200 OK\r\nContent-type: text/plain\r\n\r\n";
+    boost::asio::streambuf::const_buffers_type req_data = request.data();
 
     response.insert(response.end(), response_header.begin(), response_header.end());
-    response.insert(response.end(), request, request + request_length);
+    response.insert(response.end(), boost::asio::buffers_begin(req_data), boost::asio::buffers_begin(req_data) + request_length);
     return response;
 }
 
