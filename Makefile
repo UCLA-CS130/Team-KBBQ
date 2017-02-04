@@ -22,6 +22,9 @@ config_parser: config_parser_main.cc
 config_parser_test: config_parser.cc $(GTEST_CLASSES)
 	$(CXX) -o $@ $^ $@.cc $(GTEST_FLAGS) $(COVFLAGS)
 
+HttpRequest_test: HttpRequest.cc $(GTEST_CLASSES) 
+	$(CXX) -o $@ $^ $@.cc $(GTEST_FLAGS) $(COVFLAGS) -lboost_system
+
 libgtest.a: gtest-all.o
 	ar -rv $@ $^
 
@@ -36,6 +39,6 @@ test:
 	python3 integration_test.py
 
 clean:
-	rm -rf *.o *.a *~ *.gch *.swp *.dSYM *.gcno *.gcda *.gcov Webserver Webserver_test config_parser config_parser_test *.tar.gz
+	rm -rf *.o *.a *~ *.gch *.swp *.dSYM *.gcno *.gcda *.gcov Webserver Webserver_test HttpRequest_test config_parser config_parser_test *.tar.gz
 
 .PHONY: all clean test coverage
