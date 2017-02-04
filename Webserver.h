@@ -12,7 +12,7 @@ public:
 	bool parse_config(const char* file_name);
 	void run_server(boost::asio::io_service& io_service);
 	void session(boost::asio::ip::tcp::socket sock);
-    std::vector<char> create_response(char* request, size_t request_length);
+    std::vector<char> create_response(boost::asio::streambuf& request, size_t request_length);
     std::string get_config(std::string attribute);
 
 private:
