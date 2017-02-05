@@ -11,36 +11,51 @@ int HttpRequest::createRequest(boost::asio::streambuf& request){
     buffer = req_string;
 
     std::istream request_stream(&request);
-	std::string header;
-	char req[4];
-	char url[100];
-	char method[10];
+	std::string header, req, url, method;
 	
     //decode first line
     if(std::getline(request_stream, header) && header != "\r"){
     	
-    	sscanf(header.c_str(), "%s %s %s", req, url, method);
-		std::cout << header << std::endl;
-		std::string req_str(req);
-    	if(req_str == "POST"){
+    	std::size_t found1 = header.find_first_of(" ");
+    	
+    	if (found1 != std::string::npos)
+		{
+			req = header.substr(0, found1);
+		    
+		}
+
+		std::size_t found2 = header.find_last_of(" ");
+
+		if (found2 != std::string::npos)
+		{
+			url = header.substr(found1+1, found2-found1-1);
+			method = header.substr(found2+1, std::string::npos);
+		    
+		}
+
+		std::cout << "request is " << req << std::endl;
+		std::cout << "url is " << url << std::endl;
+		std::cout << "method is " << method << std::endl;
+		
+
+    	if(req == "POST"){
     		return -1;
     	}
     	else{
     		
-    		//no file
-    		std::string url_str(url);  				
-    		if(url_str == "/"){
+    		//no file				
+    		if(url == "/"){
     			file = "";
     			return -1;
     		}
 			//erase first slash
-			url_str.erase(0, 1);
+			url.erase(0, 1);
 
 			std::string delimiter = "/";
-			size_t pos = url_str.find(delimiter);
+			size_t pos = url.find(delimiter);
 			//set file and type
-			type = url_str.substr(0, pos);
-			file = url_str.substr(pos+1, std::string::npos);
+			type = url.substr(0, pos);
+			file = url.substr(pos+1, std::string::npos);
 			
 			if( file.back() == '/'){
 				file.erase(file.length()-1);
