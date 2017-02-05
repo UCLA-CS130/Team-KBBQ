@@ -6,7 +6,6 @@
 class HttpRequest {
 
 public:
-
 	int createRequest(boost::asio::streambuf& buffer);
 	std::string ToString();
 	std::string getFile();
