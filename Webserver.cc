@@ -1,6 +1,7 @@
 // Based on Boost library blocking_tcp_echo_server example.
 // http://www.boost.org/doc/libs/1_55_0/doc/html/boost_asio/example/cpp11/echo/blocking_tcp_echo_server.cpp
 
+#include "HttpResponse.h"
 #include "Webserver.h"
 #include <boost/asio.hpp>
 #include <cstdlib>
@@ -78,11 +79,13 @@ void Webserver::session(tcp::socket sock) {
 
             printf("Connected to client.\n\n");
 
-            // Create response
-            std::vector<char> response = create_response(request, request_length);
+            // TODO: Process request into Request class
+            // TODO: Create Response in separate function based on request
 
-            // Send response header and echo received request.
-            boost::asio::write(sock, boost::asio::buffer(response));
+            boost::asio::streambuf::const_buffers_type req_data = request.data();
+            std::string req_string(boost::asio::buffers_begin(req_data), boost::asio::buffers_begin(req_data) + request_length);
+            EchoResponse echo_response(req_string);
+            echo_response.send(sock);
             return;
         }
     }
@@ -91,15 +94,14 @@ void Webserver::session(tcp::socket sock) {
     }
 }
 
-std::vector<char> Webserver::create_response(boost::asio::streambuf& request, size_t request_length) {
-    std::vector<char> response;
-    std::string response_header = "HTTP/1.0 200 OK\r\nContent-type: text/plain\r\n\r\n";
-    boost::asio::streambuf::const_buffers_type req_data = request.data();
-
-    response.insert(response.end(), response_header.begin(), response_header.end());
-    response.insert(response.end(), boost::asio::buffers_begin(req_data), boost::asio::buffers_begin(req_data) + request_length);
-    return response;
-}
+// TODO: REFACTOR to create_response(HttpRequest &request, std::unique_ptr<HttpResponse> resp)
+// Then write resp->output() to socket
+// std::vector<char> Webserver::create_response(boost::asio::streambuf& request, size_t request_length) {
+//     boost::asio::streambuf::const_buffers_type req_data = request.data();
+//     std::string req_string(boost::asio::buffers_begin(req_data), boost::asio::buffers_begin(req_data) + request_length);
+//     EchoResponse echo_response(req_string);
+//     return echo_response.output();
+// }
 
 void Webserver::run_server(boost::asio::io_service& io_service) {
     // Listen on the given port
