@@ -5,30 +5,32 @@
 class CreateRequestTest : public ::testing::Test {
 protected:
     HttpRequest req;
-    boost::asio::streambuf b;   
+    boost::asio::streambuf b; 
+
+    void writeRequest(std::string request){
+        std::iostream os(&b);
+        os << request;
+    }
 };
 
 TEST_F(CreateRequestTest, SimpleRequest){
-    std::iostream os(&b);
-    os << "GET /static/img/file.txt/ HTTP/1.0\r\n";
+    
+    writeRequest("GET /static/img/file.txt/ HTTP/1.0\r\n");
     req.createRequest(b);
+    EXPECT_EQ("GET /static/img/file.txt/ HTTP/1.0\r\n", req.ToString());
+    EXPECT_EQ("static", req.getType());
+    EXPECT_EQ("img/file.txt", req.getFile());
 
-    std::string result = req.ToString();
-
-    EXPECT_EQ("GET /static/img/file.txt/ HTTP/1.0\r\n", result);
 }
 
 TEST_F(CreateRequestTest, InvalidRequest){
-    std::iostream os(&b);
-    os << "POST /static/img/file.txt/ HTTP/1.0\r\n";
-    
+   
+    writeRequest("POST /static/img/file.txt/ HTTP/1.0\r\n"); 
     EXPECT_EQ(-1, req.createRequest(b));
 }
 
 TEST_F(CreateRequestTest, EmptyRequest){
-    std::iostream os(&b);
-    os << "GET / HTTP/1.0\r\n";
     
+    writeRequest("GET / HTTP/1.0\r\n");    
     EXPECT_EQ(-1, req.createRequest(b));
 }
-

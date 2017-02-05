@@ -63,11 +63,3 @@ std::string HttpRequest::getFile(){
 std::string HttpRequest::getType(){
 	return type;
 };
-
-
-      
-    
-
-
-
-
