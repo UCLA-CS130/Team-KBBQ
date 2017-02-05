@@ -31,31 +31,15 @@ protected:
 	NginxConfig out_config;
 };
 
-//successful load_config
-TEST_F(LoadConfigTest, ValidConfig){
-
-	//create a config
-	std::stringstream config_stream("port 8080;");
-	parser.Parse(&config_stream, &out_config);
-	
-	bool loaded_config = server.load_configs(out_config);
-	std::string port = server.get_config("port");
-
-	//assert that config was loaded correctly
-	ASSERT_TRUE(loaded_config);
-	EXPECT_EQ("8080", port);
-	
-}
-
 //successful load config with child block
-TEST_F(LoadConfigTest, NestedLoadConfigTest){
+TEST_F(LoadConfigTest, ValidConfigTest){
 	
 	//create a config
 	std::stringstream config_stream("server { port 8080; }");
 	parser.Parse(&config_stream, &out_config);
 	
-	bool loaded_config = server.load_configs(out_config);
-	std::string port = server.get_config("port");
+	bool loaded_config = server.load_configs(out_config, "", 0);
+	std::string port = server.get_server_config("port");
 
 	//assert that config was loaded correctly
 	ASSERT_TRUE(loaded_config);
@@ -70,7 +54,7 @@ TEST_F(LoadConfigTest, InvalidConfig){
 	std::stringstream config_stream("port;");
 	parser.Parse(&config_stream, &out_config);
 	
-	bool loaded_config = server.load_configs(out_config);
+	bool loaded_config = server.load_configs(out_config, "", 0);
 
 	//assert that config was loaded correctly
 	ASSERT_FALSE(loaded_config);
@@ -84,16 +68,56 @@ TEST_F(LoadConfigTest, EmptyConfig){
 	std::stringstream config_stream("listen 8080;");
 	parser.Parse(&config_stream, &out_config);
 	
-	bool loaded_config = server.load_configs(out_config);
-	std::string port = server.get_config("port");
+	bool loaded_config = server.load_configs(out_config, "", 0);
+	std::string port = server.get_server_config("port");
 
 	ASSERT_TRUE(loaded_config);
 	EXPECT_EQ("", port);
 	
 }
 
+//successful load config with two child blocks
+TEST_F(LoadConfigTest, ServDirConfigTest){
+	
+	//create a config
+	std::stringstream config_stream("server { port 8080; } directories { /static /root; }");
+	parser.Parse(&config_stream, &out_config);
+	
+	bool loaded_config = server.load_configs(out_config, "", 0);
+	std::string port = server.get_server_config("port");
+	std::string dir = server.get_dir_config("/static");
+
+	//assert that config was loaded correctly
+	ASSERT_TRUE(loaded_config);
+	EXPECT_EQ("8080", port);
+	EXPECT_EQ("/root", dir);
+	
+}
+
+//successful load config with statement outside of block
+TEST_F(LoadConfigTest, OutsideConfigTest){
+	
+	//create a config
+	std::stringstream config_stream("server { port 8080; } /static /root;");
+	parser.Parse(&config_stream, &out_config);
+	
+	bool loaded_config = server.load_configs(out_config, "", 0);
+	std::string port = server.get_server_config("port");
+	std::string dir = server.get_server_config("/static");
+	std::string dir2 = server.get_dir_config("/static");
+
+	//assert that config was loaded correctly
+	ASSERT_TRUE(loaded_config);
+	EXPECT_EQ("8080", port);
+
+	//assert that statement outside of block is not loaded
+	EXPECT_NE("/root", dir);
+	EXPECT_NE("/root", dir2);
+	
+}
+
 //successful parse config 
-TEST(ValidParseConfigTest, Simple){
+TEST(ParseConfigTest, ValidParse){
 
 	//Create necessary classes
 	Webserver server;
@@ -101,19 +125,19 @@ TEST(ValidParseConfigTest, Simple){
 	
 	//assert file can be opened
     ASSERT_TRUE(config_file);
-    config_file << "port 8080;";
+    config_file << "server { port 8080; }";
     config_file.close();
 
 	bool parsed_config = server.parse_config("config_test");
 	std::remove("config_test");	
 
 	//assert that config was loaded correctly
-	ASSERT_TRUE(parsed_config);	
+	ASSERT_TRUE(parsed_config);
 	
 }
 
 //unsuccessful parse config 
-TEST(InvalidParseConfigTest, Simple){
+TEST(ParseConfigTest, InvalidParse){
 
 	//Create necessary classes
 	Webserver server;
@@ -121,7 +145,7 @@ TEST(InvalidParseConfigTest, Simple){
 
 	//assert file can be opened
     ASSERT_TRUE(config_file);
-    config_file << "listen 8080;";
+    config_file << "server { listen 8080 };";
     config_file.close();
 	
 	bool parsed_config = server.parse_config("config_test");
