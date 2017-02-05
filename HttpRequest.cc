@@ -26,14 +26,15 @@ int HttpRequest::createRequest(boost::asio::streambuf& request){
     		return -1;
     	}
     	else{
+    		
     		//no file
     		std::string url_str(url);  				
     		if(url_str == "/"){
+    			file = "";
     			return -1;
     		}
 			//erase first slash
 			url_str.erase(0, 1);
-			std::cout << url_str << std::endl;		
 
 			std::string delimiter = "/";
 			size_t pos = url_str.find(delimiter);
@@ -45,7 +46,7 @@ int HttpRequest::createRequest(boost::asio::streambuf& request){
 				file.erase(file.length()-1);
 			}
 
-			std::cout << "file is \"" << file << "\", type is \"" << type << "\"\n.";
+			std::cout << "file is \"" << file << "\", type is \"" << type << "\".\n";
 	    	return 0;
     	}
 	}	
@@ -62,6 +63,7 @@ std::string HttpRequest::getFile(){
 std::string HttpRequest::getType(){
 	return type;
 };
+
 
       
     
