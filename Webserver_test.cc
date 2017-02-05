@@ -47,6 +47,20 @@ TEST_F(LoadConfigTest, ValidConfigTest){
 	
 }
 
+//unsuccessful load config with nested child block
+TEST_F(LoadConfigTest, NestedConfigTest){
+	
+	//create a config
+	std::stringstream config_stream("server { port 8080; what { is this; } }");
+	parser.Parse(&config_stream, &out_config);
+	
+	bool loaded_config = server.load_configs(out_config, "", 0);
+
+	//assert that config is incorrect
+	ASSERT_FALSE(loaded_config);
+	
+}
+
 //unsuccessful load config
 TEST_F(LoadConfigTest, InvalidConfig){
 

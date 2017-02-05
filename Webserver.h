@@ -8,7 +8,7 @@
 class Webserver {
 
 public:
-    bool load_configs(NginxConfig config, std::string name, int count);
+    bool load_configs(NginxConfig config, std::string parent_name, int inside_block);
 	bool parse_config(const char* file_name);
 	void run_server(boost::asio::io_service& io_service);
 	void session(boost::asio::ip::tcp::socket sock);

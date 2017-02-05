@@ -25,7 +25,10 @@ bool Webserver::load_configs(NginxConfig config, std::string parent_name, int in
 
         if (parent_statement->child_block_.get() && name != "" && count == 0) {
             // Recurse on child block
-            load_configs(*(parent_statement->child_block_.get()), name, count + 1);
+            bool success = load_configs(*(parent_statement->child_block_.get()), name, count + 1);
+            if (!success) {
+                return false;
+            }
             name = "";
         }
         // Parse statements
