@@ -12,22 +12,42 @@ const int max_length = 4096;
 
 using boost::asio::ip::tcp;
 
-bool Webserver::load_configs(NginxConfig config) {
+bool Webserver::load_configs(NginxConfig config, std::string parent_name, int inside_block) {
+    std::string name = parent_name;
+    int count = inside_block;
+
     for (size_t i = 0; i < config.statements_.size(); i++) {
         std::shared_ptr<NginxConfigStatement> parent_statement = config.statements_[i];
 
         if (parent_statement->child_block_.get()) {
-            // Recurse on child block
-            load_configs(*(parent_statement->child_block_.get()));
+            name = parent_statement->tokens_[0];
         }
 
+        if (parent_statement->child_block_.get() && name != "" && count == 0) {
+            // Recurse on child block
+            bool success = load_configs(*(parent_statement->child_block_.get()), name, count + 1);
+            if (!success) {
+                return false;
+            }
+            name = "";
+        }
         // Parse statements
         else if (parent_statement->tokens_.size() != 2) {
             std::cerr << "Error: Invalid config syntax.\n";
             std::cerr << parent_statement->ToString(1);
             return false;
-        } else {
-            config_attributes[parent_statement->tokens_[0]] = parent_statement->tokens_[1];
+        }
+        else {
+            if (name == "server") {
+                server_attributes[parent_statement->tokens_[0]] = parent_statement->tokens_[1];
+            }
+            else if (name == "directories") {
+                dir_attributes[parent_statement->tokens_[0]] = parent_statement->tokens_[1];
+            }
+            else {
+                //ignore statements not in a child block
+                ;
+            }
         }
     }
 
@@ -38,8 +58,8 @@ bool Webserver::parse_config(const char* file_name){
 	// Try to parse the config file.
 	if (config_parser.Parse(file_name, &config_out)) {
         // Put configs into map
-        if (load_configs(config_out)) {
-            std::string port_str = get_config("port");
+        if (load_configs(config_out, "", 0)) {
+            std::string port_str = get_server_config("port");
             
             if (port_str == "") {
                 std::cerr << "Error: No port found.\n";
@@ -59,11 +79,21 @@ bool Webserver::parse_config(const char* file_name){
         return false;
 	}
 }
- 
-std::string Webserver::get_config(std::string attribute){
-    std::unordered_map<std::string, std::string>::const_iterator found = config_attributes.find(attribute);
+
+std::string Webserver::get_server_config(std::string attribute){
+    std::unordered_map<std::string, std::string>::const_iterator found = server_attributes.find(attribute);
     // Get the attribute value
-    if (found != config_attributes.end()) {
+    if (found != server_attributes.end()) {
+        return found->second;
+    } else {
+        return "";
+    }
+}
+
+std::string Webserver::get_dir_config(std::string attribute){
+    std::unordered_map<std::string, std::string>::const_iterator found = dir_attributes.find(attribute);
+    // Get the attribute value
+    if (found != dir_attributes.end()) {
         return found->second;
     } else {
         return "";

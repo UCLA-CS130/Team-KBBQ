@@ -1,1 +1,8 @@
+server {
 port 8080;
+}
+
+directories {
+/static /root;
+/static2 /usr;
+}
