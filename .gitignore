@@ -38,6 +38,5 @@
 
 # Binaries
 config_parser
-config_parser_test
 Webserver
-Webserver_test
+*_test
