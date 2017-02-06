@@ -15,8 +15,8 @@ def main():
     server = Popen(['./Webserver', 'config'], stdout=DEVNULL)
 
     print('Sending request...')
-    out = check_output(["curl", "-s", "localhost:8080"])
-    expected = b'GET / HTTP/1.1\r\nUser-Agent: curl/7.35.0\r\nHost: localhost:8080\r\nAccept: */*\r\n\r\n';
+    out = check_output(["curl", "-s", "localhost:8080/echo_request"])
+    expected = b'GET /echo_request HTTP/1.1\r\nUser-Agent: curl/7.35.0\r\nHost: localhost:8080\r\nAccept: */*\r\n\r\n';
 
     print('Checking output...')
     if (out != expected):

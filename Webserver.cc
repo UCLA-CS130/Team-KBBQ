@@ -1,6 +1,8 @@
 // Based on Boost library blocking_tcp_echo_server example.
 // http://www.boost.org/doc/libs/1_55_0/doc/html/boost_asio/example/cpp11/echo/blocking_tcp_echo_server.cpp
 
+#include "HttpConstants.h"
+#include "HttpRequest.h"
 #include "HttpResponse.h"
 #include "Webserver.h"
 #include <boost/asio.hpp>
@@ -105,17 +107,30 @@ void Webserver::session(tcp::socket sock) {
             boost::asio::streambuf request;
 
             // Read the request.
-            size_t request_length = boost::asio::read_until(sock, request, "\r\n\r\n");
+            boost::asio::read_until(sock, request, "\r\n\r\n");
 
-            printf("Connected to client.\n\n");
+            printf("Connected to client.\n");
 
-            // TODO: Process request into Request class
-            // TODO: Create Response in separate function based on request
+            HttpRequest processed_request;
+            int status = processed_request.create_request(request);
+            if (status == NOT_IMPLEMENTED) {
+                boost::asio::write(sock, boost::asio::buffer(HttpResponse::not_implemented_response()));
+                return;
+            }
+            else if (status == BAD_REQUEST) {
+                boost::asio::write(sock, boost::asio::buffer(HttpResponse::bad_request_response()));
+                return;
+            }
 
-            boost::asio::streambuf::const_buffers_type req_data = request.data();
-            std::string req_string(boost::asio::buffers_begin(req_data), boost::asio::buffers_begin(req_data) + request_length);
-            EchoResponse echo_response(req_string);
-            echo_response.send(sock);
+            std::unique_ptr<HttpResponse> response_ptr;
+            status = create_response(processed_request, response_ptr);
+
+            if (status == NOT_FOUND) {
+                boost::asio::write(sock, boost::asio::buffer(HttpResponse::not_found_response()));
+                return;
+            }
+
+            response_ptr->send(sock);
             return;
         }
     }
@@ -126,12 +141,24 @@ void Webserver::session(tcp::socket sock) {
 
 // TODO: REFACTOR to create_response(HttpRequest &request, std::unique_ptr<HttpResponse> resp)
 // Then write resp->output() to socket
-// std::vector<char> Webserver::create_response(boost::asio::streambuf& request, size_t request_length) {
-//     boost::asio::streambuf::const_buffers_type req_data = request.data();
-//     std::string req_string(boost::asio::buffers_begin(req_data), boost::asio::buffers_begin(req_data) + request_length);
-//     EchoResponse echo_response(req_string);
-//     return echo_response.output();
-// }
+int Webserver::create_response(HttpRequest &request, std::unique_ptr<HttpResponse> &response_ptr) {
+    std::string type = request.get_type();
+    std::string file_name = request.get_file();
+
+    std::string echo_url = get_server_config("echo");
+
+    if (type == echo_url && file_name == "") {
+        response_ptr = std::unique_ptr<HttpResponse>(new EchoResponse(request.to_string()));
+        return 0;
+    }
+    else if ((dir_attributes.find(type) != dir_attributes.end()) && file_name != "") {
+        std::string directory = get_dir_config(type);
+        response_ptr = std::unique_ptr<HttpResponse>(new FileResponse(directory, file_name));
+        return 0;
+    }
+
+    return NOT_FOUND;
+}
 
 void Webserver::run_server(boost::asio::io_service& io_service) {
     // Listen on the given port

@@ -1,3 +1,8 @@
+#ifndef HTTP_CONSTANTS_H
+#define HTTP_CONSTANTS_H
+
+#include <string>
+
 // FILE TYPES
 const std::string TYPE_JPEG  = "image/jpeg";
 const std::string TYPE_GIF   = "image/gif";
@@ -30,4 +35,13 @@ const std::string NOT_FOUND_RESP =
     "Content-type: text/html\r\n"
     "Content-length: 48\r\n"
     "\r\n"
-    "<html><body><h1>400 Bad Request</h1></body></html>";
+    "<html><body><h1>404 Not Found</h1></body></html>";
+
+const std::string NOT_IMPLEMENTED_RESP =
+    "HTTP/1.0 501 Not Implemented\r\n"
+    "Content-type: text/html\r\n"
+    "Content-length: 54\r\n"
+    "\r\n"
+    "<html><body><h1>501 Not Implemented</h1></body></html>";
+
+#endif

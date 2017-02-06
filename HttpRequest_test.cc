@@ -7,27 +7,27 @@ protected:
     HttpRequest req;
     boost::asio::streambuf b;
 
-    void writeRequest(std::string request){
+    void write_request(std::string request){
         std::iostream os(&b);
         os << request;
     }
 };
 
 TEST_F(CreateRequestTest, SimpleRequest){
-    writeRequest("GET /static/img/file.txt/ HTTP/1.0\r\n");
-    req.createRequest(b);
-    EXPECT_EQ("GET /static/img/file.txt/ HTTP/1.0\r\n", req.ToString());
-    EXPECT_EQ("static", req.getType());
-    EXPECT_EQ("img/file.txt", req.getFile());
+    write_request("GET /static/img/file.txt/ HTTP/1.0\r\n");
+    req.create_request(b);
+    EXPECT_EQ("GET /static/img/file.txt/ HTTP/1.0\r\n", req.to_string());
+    EXPECT_EQ("static", req.get_type());
+    EXPECT_EQ("img/file.txt", req.get_file());
 
 }
 
 TEST_F(CreateRequestTest, InvalidRequest){
-    writeRequest("POST /static/img/file.txt/ HTTP/1.0\r\n");
-    EXPECT_EQ(-1, req.createRequest(b));
+    write_request("POST /static/img/file.txt/ HTTP/1.0\r\n");
+    EXPECT_EQ(-1, req.create_request(b));
 }
 
 TEST_F(CreateRequestTest, EmptyRequest){
-    writeRequest("GET / HTTP/1.0\r\n");
-    EXPECT_EQ(-1, req.createRequest(b));
+    write_request("GET / HTTP/1.0\r\n");
+    EXPECT_EQ(-1, req.create_request(b));
 }

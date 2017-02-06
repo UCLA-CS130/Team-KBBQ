@@ -7,8 +7,9 @@
 
 class HttpResponse {
 public:
-    std::vector<char> bad_request_response();
-    std::vector<char> not_found_response();
+    static std::vector<char> bad_request_response();
+    static std::vector<char> not_found_response();
+    static std::vector<char> not_implemented_response();
     virtual int send(boost::asio::ip::tcp::socket &sock) = 0;
 };
 
@@ -21,7 +22,7 @@ private:
     std::string request;
 };
 
-class FileResponse : HttpResponse {
+class FileResponse : public HttpResponse {
 public:
     FileResponse(std::string serve_directory, std::string req_file);
     std::string get_content_type(const std::string &filename);

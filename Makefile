@@ -2,7 +2,7 @@ CXX=g++
 CXXOPTIMIZE= -O2
 CXXFLAGS= -g -Wall -pthread -std=c++11 $(CXXOPTIMIZE)
 COVFLAGS=
-SERVER_CLASSES=config_parser.cc Webserver.h Webserver_main.cc HttpResponse.h HttpResponse.cc
+SERVER_CLASSES=config_parser.cc Webserver.h Webserver_main.cc HttpResponse.h HttpResponse.cc HttpRequest.h HttpRequest.cc
 
 GTEST_DIR=googletest/googletest
 GTEST_FLAGS=-std=c++11 -isystem ${GTEST_DIR}/include -I${GTEST_DIR} -pthread

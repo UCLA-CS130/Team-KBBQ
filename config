@@ -1,8 +1,9 @@
 server {
-port 8080;
+    port 8080;
+    echo echo_request;
 }
 
 directories {
-/static /root;
-/static2 /usr;
+    static example_files/;
+    static2 example_files/example_sub/;
 }

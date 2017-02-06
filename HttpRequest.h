@@ -5,10 +5,10 @@
 
 class HttpRequest {
 public:
-	int createRequest(boost::asio::streambuf& buffer);
-	std::string ToString();
-	std::string getFile();
-	std::string getType();
+	int create_request(boost::asio::streambuf& buffer);
+	std::string to_string();
+	std::string get_file();
+	std::string get_type();
 
 private:
 	std::string file;

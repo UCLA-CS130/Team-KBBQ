@@ -25,6 +25,13 @@ std::vector<char> HttpResponse::not_found_response() {
 
 }
 
+// Encode 501 Not Implemented into byte stream
+std::vector<char> HttpResponse::not_implemented_response() {
+    std::vector<char> response (NOT_IMPLEMENTED_RESP.begin(), NOT_IMPLEMENTED_RESP.end());
+    return response;
+
+}
+
 /**********************************************
  * ECHO RESPONSE
  **********************************************/
@@ -48,6 +55,7 @@ int EchoResponse::send(boost::asio::ip::tcp::socket &sock) {
 
     // Send the response headers
     boost::asio::write(sock, boost::asio::buffer(response));
+    std::cout << "Response: 200 OK.\n\n";
     return OK;
 }
 
@@ -114,6 +122,7 @@ int FileResponse::send(boost::asio::ip::tcp::socket &sock) {
         // File not found
         response = not_found_response();
         boost::asio::write(sock, boost::asio::buffer(response));
+        std::cout << "Response: 404 Not Found.\n\n";
         return NOT_FOUND;
     }
 
@@ -125,6 +134,7 @@ int FileResponse::send(boost::asio::ip::tcp::socket &sock) {
 
         response = not_found_response();
         boost::asio::write(sock, boost::asio::buffer(response));
+        std::cout << "Response: 404 Not Found.\n\n";
         return NOT_FOUND;
     }
     // Build HTTP response
@@ -145,23 +155,12 @@ int FileResponse::send(boost::asio::ip::tcp::socket &sock) {
     // Send the response headers
     boost::asio::write(sock, boost::asio::buffer(response));
 
-    // Send file
-    // int total_sent = 0;
-    // do {
-    //     int bytes_sent = sendfile(sock.native_handle(), filefd, NULL, fileStat.st_size);
-    //     if (bytes_sent < 0) {
-    //         // Error while sending.
-    //         std::cerr << "Error: Could not send requested file: " << file_name << ".\n";
-    //         return INTERNAL_ERROR ;
-    //     }
-    //     total_sent += bytes_sent;
-    // } while (total_sent < fileStat.st_size);
-
     // Open the file to send back.
     std::ifstream in_stream(file_path.c_str(), std::ios::in | std::ios::binary);
     if (!in_stream) {
         response = not_found_response();
         boost::asio::write(sock, boost::asio::buffer(response));
+        std::cout << "Response: 404 Not Found.\n\n";
         return NOT_FOUND;
     }
 
@@ -171,5 +170,6 @@ int FileResponse::send(boost::asio::ip::tcp::socket &sock) {
         boost::asio::write(sock, boost::asio::buffer(temp_buffer, in_stream.gcount()));
     }
 
+    std::cout << "Response: 200 OK.\n\n";
     return OK;
 }
