@@ -10,7 +10,7 @@ def expected_output(output, expected):
     if (output != expected):
         print('FAILED: Output does not match expected')
         print('Expected: ' + expected.decode('utf-8'))
-        print('Output: ' + out.decode('utf-8'))
+        print('Output: ' + output.decode('utf-8'))
         exit_test(server, 1)
 
 def main():
