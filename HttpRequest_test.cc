@@ -1,6 +1,7 @@
 #include <boost/asio.hpp>
 #include "gtest/gtest.h"
 #include "HttpRequest.h"
+#include "HttpConstants.h"
 
 class CreateRequestTest : public ::testing::Test {
 protected:
@@ -24,10 +25,10 @@ TEST_F(CreateRequestTest, SimpleRequest){
 
 TEST_F(CreateRequestTest, InvalidRequest){
     write_request("POST /static/img/file.txt/ HTTP/1.0\r\n");
-    EXPECT_EQ(-1, req.create_request(b));
+    EXPECT_EQ(NOT_IMPLEMENTED, req.create_request(b));
 }
 
 TEST_F(CreateRequestTest, EmptyRequest){
     write_request("GET / HTTP/1.0\r\n");
-    EXPECT_EQ(-1, req.create_request(b));
+    EXPECT_EQ(BAD_REQUEST, req.create_request(b));
 }
