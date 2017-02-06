@@ -20,17 +20,23 @@ public:
     MOCK_METHOD1(create_request, int(boost::asio::streambuf& buffer));
 };
 
+class MockWebserver : public Webserver {
+public:
+    MOCK_METHOD1(get_server_config, std::string(std::string attribute));
+};
+
 //Correct response is made with simple input
 TEST(CreateResponseTest, Simple){
 
-    Webserver server;
+    MockWebserver server;
     std::unique_ptr<HttpResponse> response_ptr;
     MockHttpRequest processed_request;
-    ON_CALL(processed_request, create_request(_)).WillByDefault(Return(0));
-    ON_CALL(processed_request, get_file()).WillByDefault(Return(""));
-    ON_CALL(processed_request, get_type()).WillByDefault(Return("echo"));
-    ON_CALL(processed_request, to_string()).WillByDefault(Return("GET /echo HTTP/1.0\r\n\r\n"));
 
+    EXPECT_CALL(processed_request, get_file()).Times(1).WillOnce(Return(""));
+    EXPECT_CALL(processed_request, get_type()).Times(1).WillOnce(Return("echo_request"));
+    EXPECT_CALL(processed_request, to_string()).Times(1).WillOnce(Return("GET /echo_request HTTP/1.0\r\n\r\n"));
+    EXPECT_CALL(server, get_server_config(_)).Times(1).WillOnce(Return("echo_request"));
+    
     int status = server.create_response(processed_request, response_ptr);
 
     //Check that string response is equal
@@ -182,6 +188,3 @@ TEST(ParseConfigTest, InvalidParse){
     //assert that parse failed
     ASSERT_FALSE(parsed_config);    
 }
-
-
-

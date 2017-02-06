@@ -5,7 +5,7 @@
 
 class HttpRequest {
 public:
-    virtual int create_request(boost::asio::streambuf& buffer);
+    int create_request(boost::asio::streambuf& buffer);
     virtual std::string to_string();
     virtual std::string get_file();
     virtual std::string get_type();
