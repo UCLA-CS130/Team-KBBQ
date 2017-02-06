@@ -28,6 +28,9 @@ config_parser_test: config_parser.cc $(GTEST_CLASSES)
 HttpRequest_test: HttpRequest.cc $(GTEST_CLASSES) 
 	$(CXX) -o $@ $^ $@.cc $(GTEST_FLAGS) $(COVFLAGS) -lboost_system
 
+HttpResponse_test: HttpResponse.cc $(GTEST_CLASSES)
+	$(CXX) -o $@ $^ $@.cc $(GTEST_FLAGS) $(COVFLAGS) -lboost_system
+
 libgtest.a: gtest-all.o
 	ar -rv $@ $^
 
@@ -44,8 +47,11 @@ gmock-all.o: ${GMOCK_DIR}/src/gmock-all.cc
 	$(CXX) $(GMOCK_FLAGS) -c ${GMOCK_DIR}/src/gmock-all.cc
 
 coverage: COVFLAGS += -fprofile-arcs -ftest-coverage
-coverage: Webserver_test config_parser_test HttpRequest_test
-	./Webserver_test && gcov -r Webserver.cc; ./config_parser_test && gcov -r config_parser.cc; ./HttpRequest_test && gcov -r HttpRequest.cc
+coverage: Webserver_test config_parser_test HttpRequest_test HttpResponse_test
+	./Webserver_test && gcov -r Webserver.cc;
+	./config_parser_test && gcov -r config_parser.cc;
+	./HttpRequest_test && gcov -r HttpRequest.cc;
+	./HttpResponse_test && gcov -r HttpResponse.cc;
 
 test:
 	python3 integration_test.py
