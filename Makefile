@@ -7,7 +7,7 @@ SERVER_CLASSES=config_parser.cc Webserver.h Webserver_main.cc HttpResponse.h Htt
 GTEST_DIR=googletest/googletest
 GMOCK_DIR=googletest/googlemock
 GTEST_FLAGS=-std=c++11 -isystem ${GTEST_DIR}/include -I${GTEST_DIR} -pthread
-GMOCK_FLAGS=-std=c++11 -isystem ${GMOCK_DIR}/include -I${GMOCK_DIR} -pthread
+GMOCK_FLAGS=-std=c++11 -isystem ${GTEST_DIR}/include -I${GTEST_DIR} -isystem ${GMOCK_DIR}/include -I${GMOCK_DIR} -pthread
 GTEST_CLASSES=${GTEST_DIR}/src/gtest_main.cc libgtest.a
 GMOCK_CLASSES=${GMOCK_DIR}/src/gmock_main.cc libgmock.a
 
@@ -16,9 +16,9 @@ all: Webserver config_parser Webserver_test config_parser_test
 Webserver: $(SERVER_CLASSES)
 	$(CXX) -o $@ $^ $@.cc $(CXXFLAGS) -lboost_system
 
-Webserver_test: Webserver.cc config_parser.cc $(GTEST_CLASSES) $(GMOCK_CLASSES)
-	$(CXX) -o $@ $^ $@.cc $(GTEST_FLAGS) $(GMOCK_FLAGS) $(COVFLAGS) -lboost_system
- 
+Webserver_test: Webserver.cc config_parser.cc HttpRequest.cc HttpResponse.cc $(GMOCK_CLASSES)
+	$(CXX) -o $@ $^ $@.cc $(GMOCK_FLAGS) $(COVFLAGS) -lboost_system
+
 config_parser: config_parser_main.cc
 	$(CXX) -o $@ $^ $@.cc $(CXXFLAGS)
 
@@ -34,8 +34,11 @@ libgtest.a: gtest-all.o
 gtest-all.o: ${GTEST_DIR}/src/gtest-all.cc
 	$(CXX) $(GTEST_FLAGS) -c ${GTEST_DIR}/src/gtest-all.cc
 
-libgmock.a: gmock-all.o
+libgmock.a: gmock-all.o gtest-all2.o
 	ar -rv $@ $^
+
+gtest-all2.o: ${GTEST_DIR}/src/gtest-all.cc
+	$(CXX) $(GMOCK_FLAGS) -c ${GTEST_DIR}/src/gtest-all.cc -o gtest-all2.o
 
 gmock-all.o: ${GMOCK_DIR}/src/gmock-all.cc
 	$(CXX) $(GMOCK_FLAGS) -c ${GMOCK_DIR}/src/gmock-all.cc
