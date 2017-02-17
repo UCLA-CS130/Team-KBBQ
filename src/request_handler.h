@@ -61,6 +61,11 @@ class Response {
     void SetBody(const std::string& body);
 
     std::string ToString();
+
+ private:
+    std::string status;
+    std::vector<std::pair<std::string, std::string>> headers;
+    std::string response_body;
 };
 
 // Represents the parent of all request handlers. Implementations should expect to
