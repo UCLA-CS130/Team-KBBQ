@@ -1,6 +1,22 @@
 #include "request_handler.h"
 
 /*
+ * REQUEST
+ */
+
+std::string Request::raw_request() const {
+    return "";
+}
+
+std::string Request::uri() const {
+    return "";
+}
+
+std::string Request::body() const {
+    return "";
+}
+
+/*
  * RESPONSE
  */
 void Response::SetStatus(const ResponseCode response_code) {

@@ -17,7 +17,7 @@ class Request {
  public:
     static std::unique_ptr<Request> Parse(const std::string& raw_request);
 
-    std::string raw_request() const;
+    virtual std::string raw_request() const;
     std::string method() const;
     std::string uri() const;
     std::string version() const;
