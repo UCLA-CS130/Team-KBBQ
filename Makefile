@@ -2,8 +2,10 @@ CXX=g++
 CXXOPTIMIZE= -O2
 CXXFLAGS= -g -Wall -pthread -std=c++11 $(CXXOPTIMIZE)
 COVFLAGS=
-SERVER_CLASSES=config_parser.cc Webserver.h Webserver_main.cc HttpResponse.h HttpResponse.cc HttpRequest.h HttpRequest.cc
+SERVER_CLASSES= $(wildcard src/*.cc)
 
+SRC_DIR=src
+TEST_DIR=test
 GTEST_DIR=googletest/googletest
 GMOCK_DIR=googletest/googlemock
 GTEST_FLAGS=-std=c++11 -isystem ${GTEST_DIR}/include -I${GTEST_DIR} -pthread
@@ -11,25 +13,16 @@ GMOCK_FLAGS=-std=c++11 -isystem ${GTEST_DIR}/include -I${GTEST_DIR} -isystem ${G
 GTEST_CLASSES=${GTEST_DIR}/src/gtest_main.cc libgtest.a
 GMOCK_CLASSES=${GMOCK_DIR}/src/gmock_main.cc libgmock.a
 
-all: Webserver config_parser Webserver_test config_parser_test
+all: Webserver Webserver_test config_parser_test
 
 Webserver: $(SERVER_CLASSES)
-	$(CXX) -o $@ $^ $@.cc $(CXXFLAGS) -lboost_system
+	$(CXX) -o $@ $^ $(CXXFLAGS) -lboost_system
 
-Webserver_test: Webserver.cc config_parser.cc HttpRequest.cc HttpResponse.cc $(GMOCK_CLASSES)
-	$(CXX) -o $@ $^ $@.cc $(GMOCK_FLAGS) $(COVFLAGS) -lboost_system
+Webserver_test: $(filter-out $(SRC_DIR)/Webserver_main.cc, $(SERVER_CLASSES)) $(GMOCK_CLASSES)
+	$(CXX) -o $@ $^ $(TEST_DIR)/$@.cc -I$(SRC_DIR) $(GMOCK_FLAGS) $(COVFLAGS) -lboost_system
 
-config_parser: config_parser_main.cc
-	$(CXX) -o $@ $^ $@.cc $(CXXFLAGS)
-
-config_parser_test: config_parser.cc $(GTEST_CLASSES)
-	$(CXX) -o $@ $^ $@.cc $(GTEST_FLAGS) $(COVFLAGS)
-
-HttpRequest_test: HttpRequest.cc $(GTEST_CLASSES) 
-	$(CXX) -o $@ $^ $@.cc $(GTEST_FLAGS) $(COVFLAGS) -lboost_system
-
-HttpResponse_test: HttpResponse.cc $(GTEST_CLASSES)
-	$(CXX) -o $@ $^ $@.cc $(GTEST_FLAGS) $(COVFLAGS) -lboost_system
+config_parser_test: $(SRC_DIR)/config_parser.cc $(GTEST_CLASSES)
+	$(CXX) -o $@ $^ $(TEST_DIR)/$@.cc -I$(SRC_DIR) $(GTEST_FLAGS) $(COVFLAGS)
 
 libgtest.a: gtest-all.o
 	ar -rv $@ $^
@@ -47,14 +40,12 @@ gmock-all.o: ${GMOCK_DIR}/src/gmock-all.cc
 	$(CXX) $(GMOCK_FLAGS) -c ${GMOCK_DIR}/src/gmock-all.cc
 
 coverage: COVFLAGS += -fprofile-arcs -ftest-coverage
-coverage: Webserver_test config_parser_test HttpRequest_test HttpResponse_test
+coverage: Webserver_test config_parser_test
 	./Webserver_test && gcov -r Webserver.cc;
 	./config_parser_test && gcov -r config_parser.cc;
-	./HttpRequest_test && gcov -r HttpRequest.cc;
-	./HttpResponse_test && gcov -r HttpResponse.cc;
 
 test:
-	python3 integration_test.py
+	python3 $(TEST_DIR)/integration_test.py
 
 clean:
 	rm -rf *.o *.a *~ *.gch *.swp *.dSYM *.gcno *.gcda *.gcov Webserver config_parser *_test *.tar.gz
