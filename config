@@ -1,9 +1,12 @@
-server {
-    port 8080;
-    echo echo_request;
+# This is a comment.
+
+port 2020;  # This is also a comment.
+
+path / StaticHandler {
+  root /foo/bar;
 }
 
-directories {
-    static example_files/;
-    static2 example_files/example_sub/;
-}
+path /echo EchoHandler {}
+
+# Default response handler if no handlers match.
+default NotFoundHandler {}
