@@ -49,10 +49,9 @@ class Request {
 class Response {
  public:
     enum ResponseCode {
-        // Define your HTTP response codes here.
         OK = 200,
-        NOT_FOUND = 400,
-        BAD_REQUEST = 500,
+        BAD_REQUEST = 400,
+        NOT_FOUND = 404,
         NOT_IMPLEMENTED = 501
     };
 
@@ -73,8 +72,10 @@ class Response {
 class RequestHandler {
  public:
     enum Status {
-        OK = 0
-        // Define your status codes here.
+        OK = 0,
+        INVALID_CONFIG = 1,
+        INVALID_URI = 2,
+        FILE_NOT_FOUND = 3
     };
 
     // Initializes the handler. Returns true if successful.
