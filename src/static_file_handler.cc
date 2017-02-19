@@ -92,10 +92,12 @@ RequestHandler::Status StaticFileHandler::HandleRequest(const Request& request, 
 
     // Open file
     file_path = root + filename;
+    std::cout << "StaticFileHandler: Handling request for " + file_path << std::endl;
     Response::ResponseCode response_code = get_file(file_path, &contents);
 
     if (response_code != Response::ResponseCode::OK) {
         response = nullptr;
+        std::cout << "StaticFileHandler: File not found: " + file_path << std::endl;
         return RequestHandler::Status::FILE_NOT_FOUND;
     }
 

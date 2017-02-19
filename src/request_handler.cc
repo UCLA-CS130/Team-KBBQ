@@ -51,7 +51,7 @@ std::unique_ptr<Request> Request::Parse(const std::string& raw_request){
                 header_value = header_value.substr(0, header_value.length()-1);
             }
             
-            std::cout << "header field: " << header_field << ", header value: " << header_value << std::endl;
+            std::cout << "Header field: " << header_field << ", Header value: " << header_value << std::endl;
             request->headers_.push_back( std::make_pair( header_field, header_value));
         }
         else {
