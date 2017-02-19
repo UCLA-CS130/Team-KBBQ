@@ -1,7 +1,7 @@
 #include "request_handler.h"
 #include "gtest/gtest.h"
 
-TEST(ParseTest, Simple){
+TEST(ParseTest, ValidRequest){
     std::string request_string = "GET /hello.htm HTTP/1.1\r\n"
                                 "User-Agent: Mozilla/4.0 (compatible; MSIE5.01; Windows NT)\r\n"
                                 "Host: www.tutorialspoint.com\r\n"
@@ -26,5 +26,10 @@ TEST(ParseTest, Simple){
     EXPECT_EQ("en-us", request->headers()[2].second);
     EXPECT_EQ("gzip, deflate", request->headers()[3].second);
     EXPECT_EQ("Keep-Alive", request->headers()[4].second);
-   
+}
+
+TEST(ParseTest, InvalidRequest){
+    std::string request_string = "GET HTTP/1.1\r\n\r\n";
+    auto request = Request::Parse(request_string);
+    ASSERT_FALSE(request);
 }

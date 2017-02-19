@@ -9,6 +9,9 @@ std::unique_ptr<Request> Request::Parse(const std::string& raw_request){
     std::unique_ptr<Request> request(new Request());
 
     request->body_ = "";
+    request->method_ = "";
+    request->uri_ = "";
+    request->version_ = "";
     request->raw_request_ = raw_request;
 
     std::istringstream request_stream(raw_request);
@@ -17,12 +20,15 @@ std::unique_ptr<Request> Request::Parse(const std::string& raw_request){
     //handle first line
     if (std::getline(request_stream, request_line)) {
         std::vector<std::string> tokens;
-        boost::algorithm::split(tokens, request_line, boost::algorithm::is_any_of(" \r"));
+        boost::algorithm::split(tokens, request_line, boost::algorithm::is_any_of(" "));
 
-        if (!tokens.empty() && tokens[0] == "GET") {
+        if (!tokens.empty() && tokens.size() == 3) {
             request->method_ = tokens[0];
             request->uri_ = tokens[1];
-            request->version_ = tokens[2];
+            request->version_ = tokens[2].substr(0, tokens[2].length()-1);
+        }
+        else {
+            return nullptr;
         } 
     }
 
@@ -39,17 +45,14 @@ std::unique_ptr<Request> Request::Parse(const std::string& raw_request){
                 header_field = request_line.substr(0, field_index);
                 header_value = request_line.substr(field_index+2, std::string::npos);
                 //delete carriage return
-                header_value = header_value.erase(header_value.length()-1, 1);
+                header_value = header_value.substr(0, header_value.length()-1);
             }
             
             std::cout << "header field: " << header_field << ", header value: " << header_value << std::endl;
             request->headers_.push_back( std::make_pair( header_field, header_value));
         }
-        else {  
-            std::cout << "transitioning to body: " << request_line << std::endl;
-            
+        else {
             while (std::getline(request_stream, request_line)){
-                std::cout << "Putting into body: " << request_line << std::endl;
                 request->body_ += request_line;
             }
         }
