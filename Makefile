@@ -2,7 +2,7 @@ CXX=g++
 CXXOPTIMIZE= -O2
 CXXFLAGS= -g -Wall -pthread -std=c++11 $(CXXOPTIMIZE)
 COVFLAGS=
-SERVER_CLASSES= $(wildcard src/*.cc) 
+SERVER_CLASSES= $(wildcard src/*.cc)
 
 SRC_DIR=src
 TEST_DIR=test
