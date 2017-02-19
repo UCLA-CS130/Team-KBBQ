@@ -17,6 +17,9 @@ TEST(EchoHandlerTest, BasicEcho) {
 
     EchoHandler e_handler;
     Response resp;
+    NginxConfig config;
+
+    ASSERT_EQ(RequestHandler::Status::OK, e_handler.Init("", config));
     e_handler.HandleRequest(processed_request, &resp);
 
     EXPECT_EQ("HTTP/1.0 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 7\r\n\r\nfoo bar", resp.ToString());

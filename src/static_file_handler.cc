@@ -52,9 +52,9 @@ RequestHandler::Status StaticFileHandler::Init(const std::string& uri_prefix, co
             // Set the root value.
             if (root.empty()) {
                 root = stmt->tokens_[1];
-                if (root.back() != '/') {
-                    // Add slash at end of directory if does not exist
-                    root +="/";
+                if (root.back() == '/') {
+                    // Remove trailing slash from root
+                    root.substr(1);
                 }
             } else {
                 // Error: The root value has already been set.

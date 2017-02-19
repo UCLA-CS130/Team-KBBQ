@@ -14,11 +14,9 @@ const std::string TYPE_TXT   = "text/plain";
 
 class StaticFileHandler : public RequestHandler {
  public:
-    virtual RequestHandler::Status Init(const std::string& uri_prefix,
-                        const NginxConfig& config);
+    virtual RequestHandler::Status Init(const std::string& uri_prefix, const NginxConfig& config);
 
-    virtual RequestHandler::Status HandleRequest(const Request& request,
-                                 Response* response);
+    virtual RequestHandler::Status HandleRequest(const Request& request, Response* response);
 
     std::string get_content_type(const std::string &filename);
     Response::ResponseCode get_file(const std::string& file_path, std::string* contents);

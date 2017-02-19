@@ -19,7 +19,7 @@ class Request {
 
     virtual std::string raw_request() const;
     std::string method() const;
-    std::string uri() const;
+    virtual std::string uri() const;
     std::string version() const;
 
     using Headers = std::vector<std::pair<std::string, std::string>>;
