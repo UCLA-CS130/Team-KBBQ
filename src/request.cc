@@ -26,7 +26,7 @@ std::unique_ptr<Request> Request::Parse(const std::string& raw_request){
         } 
     }
 
-    //handle the rest
+    //handle the headers and body
     while (std::getline(request_stream, request_line)){
         std::vector<std::string> tokens;
         std::string header_field;
@@ -37,7 +37,9 @@ std::unique_ptr<Request> Request::Parse(const std::string& raw_request){
            
             if (field_index != std::string::npos) {
                 header_field = request_line.substr(0, field_index);
-                header_value = request_line.substr(field_index+1, std::string::npos);
+                header_value = request_line.substr(field_index+2, std::string::npos);
+                //delete carriage return
+                header_value = header_value.erase(header_value.length()-1, 1);
             }
             
             std::cout << "header field: " << header_field << ", header value: " << header_value << std::endl;
@@ -45,6 +47,7 @@ std::unique_ptr<Request> Request::Parse(const std::string& raw_request){
         }
         else {  
             std::cout << "transitioning to body: " << request_line << std::endl;
+            
             while (std::getline(request_stream, request_line)){
                 std::cout << "Putting into body: " << request_line << std::endl;
                 request->body_ += request_line;
