@@ -2,7 +2,7 @@ CXX=g++
 CXXOPTIMIZE= -O2
 CXXFLAGS= -g -Wall -pthread -std=c++11 $(CXXOPTIMIZE)
 COVFLAGS=
-SERVER_CLASSES= $(wildcard src/*.cc)
+SERVER_CLASSES= $(wildcard src/*.cc) 
 
 SRC_DIR=src
 TEST_DIR=test
@@ -22,6 +22,9 @@ Webserver_test: $(filter-out $(SRC_DIR)/Webserver_main.cc, $(SERVER_CLASSES)) $(
 	$(CXX) -o $@ $^ $(TEST_DIR)/$@.cc -I$(SRC_DIR) $(GMOCK_FLAGS) $(COVFLAGS) -lboost_system
 
 config_parser_test: $(SRC_DIR)/config_parser.cc $(GTEST_CLASSES)
+	$(CXX) -o $@ $^ $(TEST_DIR)/$@.cc -I$(SRC_DIR) $(GTEST_FLAGS) $(COVFLAGS)
+
+request_test: $(SRC_DIR)/request.cc $(GTEST_CLASSES)
 	$(CXX) -o $@ $^ $(TEST_DIR)/$@.cc -I$(SRC_DIR) $(GTEST_FLAGS) $(COVFLAGS)
 
 libgtest.a: gtest-all.o
