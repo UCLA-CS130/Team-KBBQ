@@ -61,22 +61,22 @@ Use `CreateByName` to generate a pointer to the handler specified in the argumen
 
 In Webserver_main.cc:  
 1. `bool parse_config(const char* file_name)`
-    - Ignore comments  
-    - Save the port number  
-    - For each handler block:
-      - Parse first line
-      - `RequestHandler* handler = RequestHandler::CreatebyName(<handler_name>)`
-      - `handler->Init(uri, child_block)`
-      - Put handler into map (uri -> handler). Duplicate paths are illegal. 
+* Ignore comments
+* Save the port number
+* For each handler block:
+  * Parse first line
+  * `RequestHandler* handler = RequestHandler::CreatebyName(<handler_name>)`
+  * `handler->Init(uri, child_block)`
+  * Put handler into map (uri -> handler). Duplicate paths are illegal. 
 2. `void run_server(boost::asio::io_service& io_service)` creates socket and calls `void session(boost::asio::ip::tcp::socket sock)`.  
 
-Webserver.cc:  
+In Webserver.cc:  
 3. `void session(boost::asio::ip::tcp::socket sock)`
-    - Read request from the socket
-    - Parse into Request class
-    - Find longest prefix in map
-    - handler->handleRequest(...)
-    - Write response to socket
+* Read request from the socket
+* Parse into Request class
+* Find longest prefix in map
+* handler->handleRequest(...)
+* Write response to socket
     
 ## Build
 
