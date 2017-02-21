@@ -60,7 +60,7 @@ bool Webserver::load_configs(NginxConfig config) {
                 return syntax_error(parent_statement);
             }
         }
-        else if (first_token == "path" && second_token == "/echo" && third_token == "EchoHandler") {
+        else if (first_token == "path" && third_token == "EchoHandler") {
             if (has_child && child_config.statements_.size() == 0) {
                 if (!add_handler(second_token, child_config, "EchoHandler")) {
                     return false;

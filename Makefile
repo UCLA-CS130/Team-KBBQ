@@ -18,8 +18,8 @@ all: Webserver Webserver_test config_parser_test request_handler_test echo_handl
 Webserver: $(SERVER_CLASSES)
 	$(CXX) -o $@ $^ $(CXXFLAGS) -lboost_system
 
-Webserver_test: $(filter-out $(SRC_DIR)/Webserver_main.cc, $(SERVER_CLASSES)) $(GMOCK_CLASSES)
-	$(CXX) -o $@ $^ $(TEST_DIR)/$@.cc -I$(SRC_DIR) $(GMOCK_FLAGS) $(COVFLAGS) -lboost_system
+Webserver_test: $(filter-out $(SRC_DIR)/Webserver_main.cc, $(SERVER_CLASSES)) $(GTEST_CLASSES)
+	$(CXX) -o $@ $^ $(TEST_DIR)/$@.cc -I$(SRC_DIR) $(GTEST_FLAGS) $(COVFLAGS) -lboost_system
 
 config_parser_test: $(SRC_DIR)/config_parser.cc $(GTEST_CLASSES)
 	$(CXX) -o $@ $^ $(TEST_DIR)/$@.cc -I$(SRC_DIR) $(GTEST_FLAGS) $(COVFLAGS)
