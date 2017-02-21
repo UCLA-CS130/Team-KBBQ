@@ -1,13 +1,10 @@
 #include "gtest/gtest.h"
-#include "gmock/gmock.h"
 #include "not_found_handler.h"
-
-class MockRequest : public Request {
-};
+#include "request_handler.h"
 
 // Basic not found response
 TEST(NotFoundHandlerTest, Simple) {
-    MockRequest processed_request;
+    Request processed_request;
 
     NotFoundHandler nf_handler;
     Response resp;
@@ -17,7 +14,7 @@ TEST(NotFoundHandlerTest, Simple) {
                                 "Content-Length: 48\r\n\r\n"
                                 "<html><body><h1>404 Not Found</h1></body></html>";
 
-    ASSERT_EQ(RequestHandler::Status::FILE_NOT_FOUND, nf_handler.Init("", config));
+    ASSERT_EQ(RequestHandler::Status::OK, nf_handler.Init("", config));
     nf_handler.HandleRequest(processed_request, &resp);
     EXPECT_EQ(not_found_body, resp.ToString());
 }

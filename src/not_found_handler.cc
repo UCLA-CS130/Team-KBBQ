@@ -2,7 +2,7 @@
 
 RequestHandler::Status NotFoundHandler::Init(const std::string& uri_prefix, const NginxConfig& config) {
     // There should be nothing in the config block. Ignore any configs
-    return RequestHandler::Status::FILE_NOT_FOUND;
+    return RequestHandler::Status::OK;
 }
 
 RequestHandler::Status NotFoundHandler::HandleRequest(const Request& request, Response* response) {
@@ -11,5 +11,5 @@ RequestHandler::Status NotFoundHandler::HandleRequest(const Request& request, Re
     response->AddHeader("Content-Type", "text/plain");
     response->AddHeader("Content-Length", std::to_string(not_found_body.length()));
     response->SetBody(not_found_body);
-    return RequestHandler::Status::FILE_NOT_FOUND;
+    return RequestHandler::Status::OK;
 }
