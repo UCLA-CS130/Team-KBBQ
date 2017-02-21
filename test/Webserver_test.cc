@@ -1,10 +1,8 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "Webserver.h"
+#include "request_handler.h"
 #include "config_parser.h"
-#include "HttpRequest.h"
-#include "HttpResponse.h"
-#include "HttpConstants.h"
 #include <fstream>
 #include <iostream>
 #include <cstdio>
@@ -12,37 +10,36 @@
 using ::testing::Return;
 using ::testing::_;
 
-class MockHttpRequest : public HttpRequest {
-public:
-    MOCK_METHOD0(to_string, std::string());
-    MOCK_METHOD0(get_file, std::string());
-    MOCK_METHOD0(get_type, std::string());
-    MOCK_METHOD1(create_request, int(boost::asio::streambuf& buffer));
-};
+// class MockHttpRequest : public HttpRequest {
+// public:
+//     MOCK_METHOD0(to_string, std::string());
+//     MOCK_METHOD0(get_file, std::string());
+//     MOCK_METHOD0(get_type, std::string());
+//     MOCK_METHOD1(create_request, int(boost::asio::streambuf& buffer));
+// };
 
-class MockWebserver : public Webserver {
-public:
-    MOCK_METHOD1(get_server_config, std::string(std::string attribute));
-};
+// class MockWebserver : public Webserver {
+// public:
+//     MOCK_METHOD1(get_server_config, std::string(std::string attribute));
+// };
 
-//Correct response is made with simple input
-TEST(CreateResponseTest, Simple){
+// //Correct response is made with simple input
+// TEST(CreateResponseTest, Simple){
 
-    MockWebserver server;
-    std::unique_ptr<HttpResponse> response_ptr;
-    MockHttpRequest processed_request;
+//     MockWebserver server;
+//     std::unique_ptr<HttpResponse> response_ptr;
+//     MockHttpRequest processed_request;
 
-    EXPECT_CALL(processed_request, get_file()).Times(1).WillOnce(Return(""));
-    EXPECT_CALL(processed_request, get_type()).Times(1).WillOnce(Return("echo_request"));
-    EXPECT_CALL(processed_request, to_string()).Times(1).WillOnce(Return("GET /echo_request HTTP/1.0\r\n\r\n"));
-    EXPECT_CALL(server, get_server_config(_)).Times(1).WillOnce(Return("echo_request"));
+//     EXPECT_CALL(processed_request, get_file()).Times(1).WillOnce(Return(""));
+//     EXPECT_CALL(processed_request, get_type()).Times(1).WillOnce(Return("echo_request"));
+//     EXPECT_CALL(processed_request, to_string()).Times(1).WillOnce(Return("GET /echo_request HTTP/1.0\r\n\r\n"));
+//     EXPECT_CALL(server, get_server_config(_)).Times(1).WillOnce(Return("echo_request"));
     
-    int status = server.create_response(processed_request, response_ptr);
+//     int status = server.create_response(processed_request, response_ptr);
 
-    //Check that string response is equal
-    EXPECT_EQ(0, status);
-
-}
+//     //Check that string response is equal
+//     EXPECT_EQ(0, status);
+// }
 
 class LoadConfigTest : public ::testing::Test {
 protected:
@@ -51,107 +48,132 @@ protected:
     NginxConfig out_config;
 };
 
-//successful load config with child block
-TEST_F(LoadConfigTest, ValidConfigTest){
+//unsuccessful load config with empty config
+TEST_F(LoadConfigTest, EmptyConfigTest){
     
     //create a config
-    std::stringstream config_stream("server { port 8080; }");
+    std::stringstream config_stream("");
     parser.Parse(&config_stream, &out_config);
     
-    bool loaded_config = server.load_configs(out_config, "", 0);
-    std::string port = server.get_server_config("port");
+    bool loaded_config = server.load_configs(out_config);
+
+    //assert that config was loaded correctly
+    ASSERT_FALSE(loaded_config);
+}
+
+//successful load config with port number
+TEST_F(LoadConfigTest, PortConfigTest){
+    
+    //create a config
+    std::stringstream config_stream("port 8080;");
+    parser.Parse(&config_stream, &out_config);
+    
+    bool loaded_config = server.load_configs(out_config);
 
     //assert that config was loaded correctly
     ASSERT_TRUE(loaded_config);
-    EXPECT_EQ("8080", port);
-    
+    EXPECT_EQ(8080, server.get_port());
 }
 
-//unsuccessful load config with nested child block
-TEST_F(LoadConfigTest, NestedConfigTest){
+//successful load config for EchoHandler
+TEST_F(LoadConfigTest, EchoConfigTest){
     
     //create a config
-    std::stringstream config_stream("server { port 8080; what { is this; } }");
+    std::stringstream config_stream("path /echo EchoHandler {}");
     parser.Parse(&config_stream, &out_config);
     
-    bool loaded_config = server.load_configs(out_config, "", 0);
+    bool loaded_config = server.load_configs(out_config);
+    RequestHandler* handler = server.get_config("/echo");
 
-    //assert that config is incorrect
-    ASSERT_FALSE(loaded_config);
+    //assert that config was loaded correctly
+    ASSERT_TRUE(loaded_config);
+    EXPECT_TRUE(handler);
+}
+
+//successful load config for StaticHandler
+TEST_F(LoadConfigTest, StaticConfigTest){
     
+    //create a config
+    std::stringstream config_stream("path / StaticHandler { root /foo/bar; }");
+    parser.Parse(&config_stream, &out_config);
+    
+    bool loaded_config = server.load_configs(out_config);
+    RequestHandler* handler = server.get_config("/");
+
+    //assert that config was loaded correctly
+    ASSERT_TRUE(loaded_config);
+    EXPECT_TRUE(handler);
+}
+
+//successful load config for NotFoundHandler
+TEST_F(LoadConfigTest, DefaultConfigTest){
+    
+    //create a config
+    std::stringstream config_stream("default NotFoundHandler {}");
+    parser.Parse(&config_stream, &out_config);
+
+    bool loaded_config = server.load_configs(out_config);
+    RequestHandler* handler = server.get_config("default");
+
+    //assert that config was loaded correctly
+    ASSERT_TRUE(loaded_config);
+    EXPECT_TRUE(handler);
 }
 
 //unsuccessful load config
-TEST_F(LoadConfigTest, InvalidConfig){
+TEST_F(LoadConfigTest, InvalidConfigTest){
 
     //create a config
-    std::stringstream config_stream("port;");
+    std::stringstream config_stream("listen 2020;");
     parser.Parse(&config_stream, &out_config);
     
-    bool loaded_config = server.load_configs(out_config, "", 0);
+    bool loaded_config = server.load_configs(out_config);
 
     //assert that config was loaded correctly
     ASSERT_FALSE(loaded_config);
 }
 
-
-//successful load config, but empty port number
-TEST_F(LoadConfigTest, EmptyConfig){
+//unsuccessful load config with empty path
+TEST_F(LoadConfigTest, NoPathConfigTest){
     
     //create a config
-    std::stringstream config_stream("listen 8080;");
+    std::stringstream config_stream("path / StaticHandler {}");
     parser.Parse(&config_stream, &out_config);
     
-    bool loaded_config = server.load_configs(out_config, "", 0);
-    std::string port = server.get_server_config("port");
-
-    ASSERT_TRUE(loaded_config);
-    EXPECT_EQ("", port);
-    
-}
-
-//successful load config with two child blocks
-TEST_F(LoadConfigTest, ServDirConfigTest){
-    
-    //create a config
-    std::stringstream config_stream("server { port 8080; } directories { /static /root; }");
-    parser.Parse(&config_stream, &out_config);
-    
-    bool loaded_config = server.load_configs(out_config, "", 0);
-    std::string port = server.get_server_config("port");
-    std::string dir = server.get_dir_config("/static");
+    bool loaded_config = server.load_configs(out_config);
 
     //assert that config was loaded correctly
-    ASSERT_TRUE(loaded_config);
-    EXPECT_EQ("8080", port);
-    EXPECT_EQ("/root", dir);
-    
+    ASSERT_FALSE(loaded_config);
 }
 
-//successful load config with statement outside of block
-TEST_F(LoadConfigTest, OutsideConfigTest){
+//unsuccessful load config with same mapping
+TEST_F(LoadConfigTest, SameConfigTest){
     
     //create a config
-    std::stringstream config_stream("server { port 8080; } /static /root;");
+    std::stringstream config_stream("path / StaticHandler { root /foo; } path / StaticHandler { root /bar; }");
     parser.Parse(&config_stream, &out_config);
     
-    bool loaded_config = server.load_configs(out_config, "", 0);
-    std::string port = server.get_server_config("port");
-    std::string dir = server.get_server_config("/static");
-    std::string dir2 = server.get_dir_config("/static");
+    bool loaded_config = server.load_configs(out_config);
 
     //assert that config was loaded correctly
-    ASSERT_TRUE(loaded_config);
-    EXPECT_EQ("8080", port);
-
-    //assert that statement outside of block is not loaded
-    EXPECT_NE("/root", dir);
-    EXPECT_NE("/root", dir2);
-    
+    ASSERT_FALSE(loaded_config);
 }
 
-//successful parse config 
-TEST(ParseConfigTest, ValidParse){
+//unsuccessful load config with EchoHandler child
+TEST_F(LoadConfigTest, ChildConfigTest){
+    
+    //create a config
+    std::stringstream config_stream("path /echo EchoHandler { root /foot/bar; }");
+    parser.Parse(&config_stream, &out_config);
+    
+    bool loaded_config = server.load_configs(out_config);
+
+    //assert that config was loaded correctly
+    ASSERT_FALSE(loaded_config);
+}
+
+//successful parse config
+TEST(ParseConfigTest, ValidParseTest){
 
     //Create necessary classes
     Webserver server;
@@ -159,7 +181,7 @@ TEST(ParseConfigTest, ValidParse){
     
     //assert file can be opened
     ASSERT_TRUE(config_file);
-    config_file << "server { port 8080; }";
+    config_file << "port 8080;";
     config_file.close();
 
     bool parsed_config = server.parse_config("config_test");
@@ -167,11 +189,10 @@ TEST(ParseConfigTest, ValidParse){
 
     //assert that config was loaded correctly
     ASSERT_TRUE(parsed_config);
-    
 }
 
-//unsuccessful parse config 
-TEST(ParseConfigTest, InvalidParse){
+//unsuccessful parse config
+TEST(ParseConfigTest, InvalidParseTest){
 
     //Create necessary classes
     Webserver server;
@@ -179,7 +200,7 @@ TEST(ParseConfigTest, InvalidParse){
 
     //assert file can be opened
     ASSERT_TRUE(config_file);
-    config_file << "server { listen 8080 };";
+    config_file << "port 8080";
     config_file.close();
     
     bool parsed_config = server.parse_config("config_test");
