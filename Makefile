@@ -33,6 +33,9 @@ echo_handler_test: $(SRC_DIR)/request_handler.cc $(SRC_DIR)/echo_handler.cc $(GM
 static_file_handler_test: $(SRC_DIR)/request_handler.cc $(SRC_DIR)/static_file_handler.cc $(SRC_DIR)/config_parser.cc $(GMOCK_CLASSES)
 	$(CXX) -o $@ $^ $(TEST_DIR)/$@.cc -I$(SRC_DIR) $(GMOCK_FLAGS) $(COVFLAGS)
 
+not_found_handler_test: $(SRC_DIR)/request_handler.cc $(SRC_DIR)/not_found_handler.cc $(GMOCK_CLASSES)
+	$(CXX) -o $@ $^ $(TEST_DIR)/$@.cc -I$(SRC_DIR) $(GMOCK_FLAGS) $(COVFLAGS)
+
 libgtest.a: gtest-all.o
 	ar -rv $@ $^
 
@@ -55,6 +58,7 @@ coverage: Webserver_test echo_handler_test static_file_handler_test config_parse
 	./request_handler_test && gcov -s src -r request_handler.cc;
 	./echo_handler_test && gcov -s src -r echo_handler.cc;
 	./static_file_handler_test && gcov -s src -r static_file_handler.cc;
+	./not_found_handler_test && gcov -s src -r not_found_handler.cc;
 
 test:
 	python3 $(TEST_DIR)/integration_test.py
