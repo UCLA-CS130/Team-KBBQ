@@ -17,9 +17,9 @@ class Request {
  public:
     static std::unique_ptr<Request> Parse(const std::string& raw_request);
 
-    std::string raw_request() const;
+    virtual std::string raw_request() const;
     std::string method() const;
-    std::string uri() const;
+    virtual std::string uri() const;
     std::string version() const;
 
     using Headers = std::vector<std::pair<std::string, std::string>>;
@@ -49,10 +49,9 @@ class Request {
 class Response {
  public:
     enum ResponseCode {
-        // Define your HTTP response codes here.
         OK = 200,
-        NOT_FOUND = 400,
-        BAD_REQUEST = 500,
+        BAD_REQUEST = 400,
+        NOT_FOUND = 404,
         NOT_IMPLEMENTED = 501
     };
 
@@ -61,6 +60,11 @@ class Response {
     void SetBody(const std::string& body);
 
     std::string ToString();
+
+ private:
+    std::string status_;
+    std::vector<std::pair<std::string, std::string>> headers_;
+    std::string response_body_;
 };
 
 // Represents the parent of all request handlers. Implementations should expect to
@@ -68,8 +72,10 @@ class Response {
 class RequestHandler {
  public:
     enum Status {
-        OK = 0
-        // Define your status codes here.
+        OK = 0,
+        INVALID_CONFIG = 1,
+        INVALID_URI = 2,
+        FILE_NOT_FOUND = 3
     };
 
     // Initializes the handler. Returns true if successful.

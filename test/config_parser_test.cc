@@ -94,7 +94,7 @@ TEST_F(NginxConfigParserTest, BadSemicolon) {
 //Checks that a large config is parsed correctly
 //Code taken from https://www.nginx.com/resources/wiki/start/topics/examples/full/
 TEST_F(NginxConfigParserTest, FullExampleConfig) {
-	ASSERT_TRUE(ParseFile("fullex_config"));
+	ASSERT_TRUE(ParseFile("test/fullex_config"));
 }
 
 // Test bad config file
