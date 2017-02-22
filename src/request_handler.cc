@@ -92,6 +92,7 @@ std::string Request::body() const {
  * RESPONSE
  */
 void Response::SetStatus(const ResponseCode response_code) {
+    status_code_ = response_code;
     switch (response_code) {
         case ResponseCode::OK:
             status_ = "200 OK";
@@ -142,6 +143,9 @@ std::string Response::ToString() {
     return response;
 }
 
+Response::ResponseCode Response::status_code() {
+    return status_code_;
+}
 
 /*
  * REQUEST HANDLER (BASE)

@@ -13,8 +13,8 @@ GMOCK_FLAGS=-std=c++11 -isystem ${GTEST_DIR}/include -I${GTEST_DIR} -isystem ${G
 GTEST_CLASSES=${GTEST_DIR}/src/gtest_main.cc libgtest.a
 GMOCK_CLASSES=${GMOCK_DIR}/src/gmock_main.cc libgmock.a
 
-all: Webserver Webserver_test config_parser_test
-	 server_status_tracker_test
+all: Webserver Webserver_test config_parser_test \
+	 server_status_tracker_test \
 	 request_handler_test echo_handler_test static_file_handler_test not_found_handler_test
 
 Webserver: $(SERVER_CLASSES)
@@ -60,7 +60,7 @@ gmock-all.o: ${GMOCK_DIR}/src/gmock-all.cc
 	$(CXX) $(GMOCK_FLAGS) -c ${GMOCK_DIR}/src/gmock-all.cc
 
 coverage: COVFLAGS += -fprofile-arcs -ftest-coverage
-coverage: Webserver_test echo_handler_test static_file_handler_test not_found_handler_test
+coverage: Webserver_test echo_handler_test static_file_handler_test not_found_handler_test \
 		  config_parser_test request_handler_test status_handler_test server_status_tracker_test
 	./Webserver_test && gcov -s src -r Webserver.cc;
 	./config_parser_test && gcov -s src -r config_parser.cc;

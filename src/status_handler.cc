@@ -13,11 +13,15 @@ RequestHandler::Status StatusHandler::HandleRequest(const Request& request, Resp
 
     std::ostringstream contents; 
     contents << "<!DOCTYPE html><html>" <<
+                "<head>" <<
+                "<style>table {border-collapse: collapse;}th, td {padding: 8px;text-align: left; border-bottom: 1px solid #ddd;}</style>" <<
+                "</head>" <<
+                "<body>" <<
                 "<h1>Server Status</h1>" <<
                 "<h2>Requests</h2>" <<
                 "<p>Total Requests: " << num_requests << "</p>" <<
                 "<table>" <<
-                "<th><td>Request URL</td><td>Response Code</td></th>";
+                "<tr><th>Request URL</th><th>Response Code</th></tr>";
 
     if (num_requests > 0) {
         for (auto req : url_requests) {  
@@ -33,7 +37,7 @@ RequestHandler::Status StatusHandler::HandleRequest(const Request& request, Resp
     contents << "</table>" <<
                 "<h2>Request Handlers</h2>" <<
                 "<table>" <<
-                "<th><td>URL Prefix</td><td>Response Handler</td></th>";
+                "<tr><th>URL Prefix</th><th>Response Handler</th></tr>";
 
     for (auto handler : handlers) {  
         contents << "<tr>" <<
@@ -43,7 +47,7 @@ RequestHandler::Status StatusHandler::HandleRequest(const Request& request, Resp
     }
 
     contents << "</table>" <<
-                "</html>";
+                "</body></html>";
 
     std::string status_page = contents.str();
 

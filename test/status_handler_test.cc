@@ -20,6 +20,10 @@ TEST(StatusHandlerTest, Output) {
         "Content-Type: text/html\r\n" +
         "Content-Length: 425\r\n\r\n" +
         "<!DOCTYPE html><html>" +
+        "<head>" +
+        "<style>table {border-collapse: collapse;}th, td {padding: 8px;text-align: left; border-bottom: 1px solid #ddd;}</style>" +
+        "</head>" +
+        "<body>" +
         "<h1>Server Status</h1>" +
         "<h2>Requests</h2>" +
         "<p>Total Requests: 2</p>" +
@@ -45,7 +49,7 @@ TEST(StatusHandlerTest, Output) {
         "<td>/static</td>" +
         "<td>StaticFileHandler</td>" +
         "</tr>" + 
-        "</table></html>";
+        "</table></body></html>";
 
     ServerStatusTracker::GetInstance().RecordHandlerMapping("/echo", "EchoHandler");
     ServerStatusTracker::GetInstance().RecordHandlerMapping("/static", "StaticFileHandler");

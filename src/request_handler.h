@@ -60,8 +60,10 @@ class Response {
     void SetBody(const std::string& body);
 
     std::string ToString();
+    ResponseCode status_code();
 
  private:
+    ResponseCode status_code_;
     std::string status_;
     std::vector<std::pair<std::string, std::string>> headers_;
     std::string response_body_;
