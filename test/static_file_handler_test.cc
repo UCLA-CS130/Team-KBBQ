@@ -107,6 +107,19 @@ TEST_F(StaticFileHandlerTests, TrailingSlash) {
     remove("test_file.txt");
 }
 
+// Empty file name
+TEST_F(StaticFileHandlerTests, EmptyFileName) {
+    EXPECT_CALL(processed_request, uri()).Times(1).WillOnce(Return("/static/"));
+    ASSERT_TRUE(ParseString("root ./;"));
+
+    // Initialize handler for uri prefix "/static"
+    StaticFileHandler f_handler;
+    Response resp;
+    ASSERT_EQ(RequestHandler::Status::OK, f_handler.Init("/static", out_config_));
+
+    ASSERT_EQ(RequestHandler::Status::FILE_NOT_FOUND, f_handler.HandleRequest(processed_request, &resp));
+}
+
 TEST_F(StaticFileHandlerTests, HandleBasicRequest) {
     EXPECT_CALL(processed_request, uri()).Times(1).WillOnce(Return("/static/test_file.txt"));
 

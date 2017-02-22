@@ -90,6 +90,13 @@ RequestHandler::Status StaticFileHandler::HandleRequest(const Request& request, 
         filename.erase(0, prefix.length());
     }
 
+    // If no file, do not try to open directory.
+    if (filename.empty() || filename == "/") {
+        response = nullptr;
+        std::cout << "StaticFileHandler: Empty file name" << std::endl;
+        return RequestHandler::Status::FILE_NOT_FOUND;
+    }
+
     // Open file
     file_path = root + filename;
     std::cout << "StaticFileHandler: Handling request for " + file_path << std::endl;
