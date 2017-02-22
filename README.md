@@ -51,7 +51,7 @@ Gives the same request back to server.
 
 #### StaticFileHandler
 
-Returns specified file to the server. `get_file` returns the type of file based on the extension. `get_file` attempts to open file and returns a corresponding response code. Both functions are called in `HandleRequest`.
+Returns specified file to the server. `get_content_type` returns the type of file based on the extension. `get_file` attempts to open file and returns a corresponding response code. Both functions are called in `HandleRequest`.
 
 ```cpp
 std::string get_content_type(const std::string &filename);
@@ -88,7 +88,7 @@ void session(boost::asio::ip::tcp::socket sock);
 ### Dispatch
 
 In Webserver_main.cc:  
-1. `bool parse_config(const char* file_name)` parses config file.
+`bool parse_config(const char* file_name)` parses config file.
 * Ignore comments
 * Save the port number
 * For each handler block:
@@ -97,10 +97,10 @@ In Webserver_main.cc:
   * `handler->Init(uri, child_block)`
   * Put handler into map (uri -> handler). Duplicate paths are illegal.
 
-2. `void run_server(boost::asio::io_service& io_service)` creates socket and calls `void session(boost::asio::ip::tcp::socket sock)`.
+`void run_server(boost::asio::io_service& io_service)` creates socket and calls `void session(boost::asio::ip::tcp::socket sock)`.
 
 In Webserver.cc:  
-3. `void session(boost::asio::ip::tcp::socket sock)`
+`void session(boost::asio::ip::tcp::socket sock)`
 * Read request from the socket
 * Parse into Request class with `Request::Parse(&request)`
 * Call `get_handler(uri)` which will return appropriate handler
