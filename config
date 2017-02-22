@@ -2,8 +2,8 @@
 
 port 2020;  # This is also a comment.
 
-path / StaticHandler {
-  root /foo/bar;
+path /s StaticFileHandler {
+  root ex;
 }
 
 path /echo EchoHandler {}

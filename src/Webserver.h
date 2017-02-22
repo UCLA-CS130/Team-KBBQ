@@ -13,9 +13,10 @@ public:
     void run_server(boost::asio::io_service& io_service);
     void session(boost::asio::ip::tcp::socket sock);
     bool syntax_error(std::shared_ptr<NginxConfigStatement> parent_statement);
-    bool add_handler(std::string attribute, NginxConfig child_config, const char* handler_name);
+    bool add_handler(std::string attribute, NginxConfig child_config, std::string handler_name);
     virtual RequestHandler* get_config(std::string attribute);
     unsigned short get_port();
+    std::string buffer_to_string(const boost::asio::streambuf &buffer);
 
 private:
     NginxConfigParser config_parser;

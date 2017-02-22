@@ -9,6 +9,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <thread>
+#include <iterator>
 #include <utility>
 
 using boost::asio::ip::tcp;
@@ -60,35 +61,15 @@ bool Webserver::load_configs(NginxConfig config) {
                 return syntax_error(parent_statement);
             }
         }
-        else if (first_token == "path" && third_token == "EchoHandler") {
-            if (has_child && child_config.statements_.size() == 0) {
-                if (!add_handler(second_token, child_config, "EchoHandler")) {
+        else if (first_token == "path" && third_token != "") {
+                if (!add_handler(second_token, child_config, third_token)) {
                     return false;
                 }
-            }
-            else {
-                return syntax_error(parent_statement);
-            }
-        }
-        else if (first_token == "path" && third_token == "StaticHandler") {
-            if (has_child && child_config.statements_.size() != 0) {
-                if (!add_handler(second_token, child_config, "StaticFileHandler")) {
-                    return false;
-                }
-            }
-            else {
-                return syntax_error(parent_statement);
-            }
         }
         else if (first_token == "default" && second_token == "NotFoundHandler" && third_token == "") {
-            if (has_child && child_config.statements_.size() == 0) {
-                if (!add_handler(first_token, child_config, "NotFoundHandler")) {
+                if (!add_handler(first_token, child_config, second_token)) {
                     return false;
                 }
-            }
-            else {
-                return syntax_error(parent_statement);
-            }
         }
         else {
             return syntax_error(parent_statement);
@@ -104,10 +85,20 @@ bool Webserver::syntax_error(std::shared_ptr<NginxConfigStatement> parent_statem
     return false;
 }
 
-bool Webserver::add_handler(std::string attribute, NginxConfig child_config, const char* handler_name) {
-    RequestHandler* handler = RequestHandler::CreateByName(handler_name);
-    handler->Init(attribute, child_config);
+bool Webserver::add_handler(std::string attribute, NginxConfig child_config, std::string handler_name) {
+    const char* name = handler_name.c_str();
 
+    RequestHandler* handler = RequestHandler::CreateByName(name);
+
+    if (!handler) {
+        std::cerr << "Error: Invalid handler name.\n";
+        return false;
+    }
+
+    if (handler->Init(attribute, child_config) != RequestHandler::Status::OK) {
+        std::cerr << "Error: Invalid handler config.\n";
+        return false;
+    }
     std::unordered_map<std::string, RequestHandler*>::const_iterator found = handler_map.find(attribute);
     // If mapping already exists, return false, else add to map
     if (found != handler_map.end()) {
@@ -138,7 +129,9 @@ RequestHandler* Webserver::get_config(std::string attribute) {
     if (found != handler_map.end()) {
         return found->second;
     } else {
-        return NULL;
+        found = handler_map.find("default");
+        std::cerr << "Error: Handler not found.\n";
+        return found->second;
     }
 }
 
@@ -156,11 +149,19 @@ void Webserver::session(tcp::socket sock) {
 
             printf("Connected to client.\n");
 
-            /* TODO: 
-             * Parse into new Request Class
-             * Call handler
-             * Write Response to socket
-             */
+            std::string str = buffer_to_string(request);
+            const std::unique_ptr<Request> req = Request::Parse(str);
+            RequestHandler* handler = get_config(req->uri());
+            Response resp;
+
+            if (handler->HandleRequest(*req, &resp) == RequestHandler::Status::FILE_NOT_FOUND) {
+                handler = get_config("default");
+                handler->HandleRequest(*req, &resp);
+                std::cerr << "Error: File not found.\n";
+                return;
+            }
+            boost::asio::write(sock, boost::asio::buffer(resp.ToString()));
+            return;
         }
     }
     catch (std::exception& e) {
@@ -179,3 +180,29 @@ void Webserver::run_server(boost::asio::io_service& io_service) {
         std::thread(&Webserver::session, this, std::move(sock)).detach();
     }
 }
+
+//Taken from: https://gist.github.com/vladon/8b487e41cb3b49e172db
+std::string Webserver::buffer_to_string(const boost::asio::streambuf &buffer)
+{
+  using boost::asio::buffers_begin;
+  
+  auto bufs = buffer.data();
+  std::string result(buffers_begin(bufs), buffers_begin(bufs) + buffer.size());
+  return result;
+}
+
+// std::string Webserver::find_prefix(std::string uri) {
+//     std::string longest;
+//     for (auto it : handler_map) {
+//         std::string map = it.first;
+
+//         if (map.length() < longest.length()) {
+//             auto res = std::mismatch(map.begin(), map.end(), longest.begin())
+//         }
+
+//         auto res = std::mismatch(mapped)
+
+
+
+//     }
+// }
