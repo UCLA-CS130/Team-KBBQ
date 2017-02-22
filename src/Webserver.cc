@@ -63,7 +63,7 @@ bool Webserver::load_configs(NginxConfig config) {
                     return false;
                 }
         }
-        else if (first_token == "default" && second_token == "NotFoundHandler" && third_token == "") {
+        else if (first_token == "default" && third_token == "") {
                 if (!add_handler(first_token, child_config, second_token)) {
                     return false;
                 }
@@ -196,13 +196,19 @@ std::string Webserver::buffer_to_string(const boost::asio::streambuf &buffer)
 }
 
 std::string Webserver::find_prefix(std::string uri) {
-    std::string longest;
+    std::string longest = "";
     size_t last = uri.find_last_of("/");
     std::string prefix = uri.substr(0, last);
+    std::cout << prefix << "\n";
+    std::cout << prefix.length() << "\n";
 
     for (auto it : handler_map) {
         std::string map = it.first;
-        if (prefix.find(map) == 0) {
+        std::cout << map << "\n";
+        std::cout << map.length() << "\n";
+        
+        if (prefix.find(map) == 0 && (prefix.find("/", map.length()) == map.length() || 
+            map.length() == prefix.length())) {
             if (map.length() > longest.length()) {
                 longest = map;
             }
