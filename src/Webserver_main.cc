@@ -16,7 +16,10 @@ int main(int argc, char* argv[]) {
 
         //Create server object and parse config file
         Webserver server;
-        server.parse_config(argv[1]);
+        if (!server.parse_config(argv[1])) {
+            std::cerr << "Error: Failed to parse config file.\n";
+            return 1;
+        }
 
         boost::asio::io_service io_service;
         // Start the server.
