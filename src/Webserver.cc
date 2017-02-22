@@ -132,7 +132,6 @@ RequestHandler* Webserver::get_handler(std::string uri) {
             return found->second;
         }
         else {
-            std::cerr << "Error: Handler not found.\n";
             found = handler_map.find("default");
             return found->second;
         }
@@ -199,14 +198,10 @@ std::string Webserver::find_prefix(std::string uri) {
     std::string longest = "";
     size_t last = uri.find_last_of("/");
     std::string prefix = uri.substr(0, last);
-    std::cout << prefix << "\n";
-    std::cout << prefix.length() << "\n";
 
     for (auto it : handler_map) {
         std::string map = it.first;
-        std::cout << map << "\n";
-        std::cout << map.length() << "\n";
-        
+
         if (prefix.find(map) == 0 && (prefix.find("/", map.length()) == map.length() || 
             map.length() == prefix.length())) {
             if (map.length() > longest.length()) {
