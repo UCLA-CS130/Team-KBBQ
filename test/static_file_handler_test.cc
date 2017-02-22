@@ -22,6 +22,7 @@ protected:
     }
     NginxConfigParser parser_;
     NginxConfig out_config_;
+    MockRequest processed_request;
 };
 
 // Get file test
@@ -86,9 +87,40 @@ TEST_F(StaticFileHandlerTests, DuplicateRoot) {
     ASSERT_EQ(RequestHandler::Status::INVALID_CONFIG, status);
 }
 
-TEST_F(StaticFileHandlerTests, HandleBasicRequest) {
-    MockRequest processed_request;
+// Trailing slash in URI
+TEST_F(StaticFileHandlerTests, TrailingSlash) {
+    EXPECT_CALL(processed_request, uri()).Times(1).WillOnce(Return("/static/test_file.txt"));
+    ASSERT_TRUE(ParseString("root ./;"));
 
+    // Create a test file
+    std::ofstream test_file("test_file.txt");
+    test_file << "foo bar" << std::endl;
+    test_file.close();
+
+    // Initialize handler for uri prefix "/static"
+    StaticFileHandler f_handler;
+    Response resp;
+    ASSERT_EQ(RequestHandler::Status::OK, f_handler.Init("/static", out_config_));
+
+    ASSERT_EQ(RequestHandler::Status::OK, f_handler.HandleRequest(processed_request, &resp));
+    EXPECT_EQ("HTTP/1.0 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 8\r\n\r\nfoo bar\n", resp.ToString());
+    remove("test_file.txt");
+}
+
+// Empty file name
+TEST_F(StaticFileHandlerTests, EmptyFileName) {
+    EXPECT_CALL(processed_request, uri()).Times(1).WillOnce(Return("/static/"));
+    ASSERT_TRUE(ParseString("root ./;"));
+
+    // Initialize handler for uri prefix "/static"
+    StaticFileHandler f_handler;
+    Response resp;
+    ASSERT_EQ(RequestHandler::Status::OK, f_handler.Init("/static", out_config_));
+
+    ASSERT_EQ(RequestHandler::Status::FILE_NOT_FOUND, f_handler.HandleRequest(processed_request, &resp));
+}
+
+TEST_F(StaticFileHandlerTests, HandleBasicRequest) {
     EXPECT_CALL(processed_request, uri()).Times(1).WillOnce(Return("/static/test_file.txt"));
 
     ASSERT_TRUE(ParseString("root ./;"));

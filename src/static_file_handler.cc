@@ -54,7 +54,7 @@ RequestHandler::Status StaticFileHandler::Init(const std::string& uri_prefix, co
                 root = stmt->tokens_[1];
                 if (root.back() == '/') {
                     // Remove trailing slash from root
-                    root.substr(1);
+                    root = root.substr(0, root.length()-1);
                 }
             } else {
                 // Error: The root value has already been set.
@@ -88,6 +88,13 @@ RequestHandler::Status StaticFileHandler::HandleRequest(const Request& request, 
     } else {
         // Remove the prefix from the URI to get the file name.
         filename.erase(0, prefix.length());
+    }
+
+    // If no file, do not try to open directory.
+    if (filename.empty() || filename == "/") {
+        response = nullptr;
+        std::cout << "StaticFileHandler: Empty file name" << std::endl;
+        return RequestHandler::Status::FILE_NOT_FOUND;
     }
 
     // Open file
