@@ -54,7 +54,7 @@ RequestHandler::Status StaticFileHandler::Init(const std::string& uri_prefix, co
                 root = stmt->tokens_[1];
                 if (root.back() == '/') {
                     // Remove trailing slash from root
-                    root.substr(1);
+                    root = root.substr(0, root.length()-1);
                 }
             } else {
                 // Error: The root value has already been set.
