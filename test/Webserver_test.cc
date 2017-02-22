@@ -48,7 +48,7 @@ TEST_F(LoadConfigTest, EchoConfigTest){
     parser.Parse(&config_stream, &out_config);
     
     bool loaded_config = server.load_configs(out_config);
-    RequestHandler* handler = server.get_config("/echo");
+    RequestHandler* handler = server.get_handler("/echo");
 
     //assert that config was loaded correctly
     ASSERT_TRUE(loaded_config);
@@ -59,11 +59,11 @@ TEST_F(LoadConfigTest, EchoConfigTest){
 TEST_F(LoadConfigTest, StaticConfigTest){
     
     //create a config
-    std::stringstream config_stream("path / StaticHandler { root /foo/bar; }");
+    std::stringstream config_stream("path / StaticFileHandler { root /foo/bar; }");
     parser.Parse(&config_stream, &out_config);
     
     bool loaded_config = server.load_configs(out_config);
-    RequestHandler* handler = server.get_config("/");
+    RequestHandler* handler = server.get_handler("/");
 
     //assert that config was loaded correctly
     ASSERT_TRUE(loaded_config);
@@ -78,7 +78,7 @@ TEST_F(LoadConfigTest, DefaultConfigTest){
     parser.Parse(&config_stream, &out_config);
 
     bool loaded_config = server.load_configs(out_config);
-    RequestHandler* handler = server.get_config("default");
+    RequestHandler* handler = server.get_handler("default");
 
     //assert that config was loaded correctly
     ASSERT_TRUE(loaded_config);
@@ -102,7 +102,7 @@ TEST_F(LoadConfigTest, InvalidConfigTest){
 TEST_F(LoadConfigTest, NoPathConfigTest){
     
     //create a config
-    std::stringstream config_stream("path / StaticHandler {}");
+    std::stringstream config_stream("path / StaticFileHandler {}");
     parser.Parse(&config_stream, &out_config);
     
     bool loaded_config = server.load_configs(out_config);
@@ -115,20 +115,7 @@ TEST_F(LoadConfigTest, NoPathConfigTest){
 TEST_F(LoadConfigTest, SameConfigTest){
     
     //create a config
-    std::stringstream config_stream("path / StaticHandler { root /foo; } path / StaticHandler { root /bar; }");
-    parser.Parse(&config_stream, &out_config);
-    
-    bool loaded_config = server.load_configs(out_config);
-
-    //assert that config was loaded correctly
-    ASSERT_FALSE(loaded_config);
-}
-
-//unsuccessful load config with EchoHandler child
-TEST_F(LoadConfigTest, ChildConfigTest){
-    
-    //create a config
-    std::stringstream config_stream("path /echo EchoHandler { root /foot/bar; }");
+    std::stringstream config_stream("path / StaticFileHandler { root /foo; } path / StaticFileHandler { root /bar; }");
     parser.Parse(&config_stream, &out_config);
     
     bool loaded_config = server.load_configs(out_config);

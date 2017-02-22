@@ -126,8 +126,7 @@ RequestHandler* Webserver::get_handler(std::string uri) {
     if (found != handler_map.end()) {
         return found->second;
     } else {
-        size_t last = uri.find_last_of("/");
-        std::string prefix = uri.substr(0, last);
+        std::string prefix = find_prefix(uri);
         found = handler_map.find(prefix);
         if (found != handler_map.end()) {
             return found->second;
@@ -194,4 +193,21 @@ std::string Webserver::buffer_to_string(const boost::asio::streambuf &buffer)
   auto bufs = buffer.data();
   std::string result(buffers_begin(bufs), buffers_begin(bufs) + buffer.size());
   return result;
+}
+
+std::string Webserver::find_prefix(std::string uri) {
+    std::string longest;
+    size_t last = uri.find_last_of("/");
+    std::string prefix = uri.substr(0, last);
+
+    for (auto it : handler_map) {
+        std::string map = it.first;
+        if (prefix.find(map) == 0) {
+            if (map.length() > longest.length()) {
+                longest = map;
+            }
+        }
+    }
+
+    return longest;
 }

@@ -17,6 +17,7 @@ public:
     virtual RequestHandler* get_handler(std::string uri);
     unsigned short get_port();
     std::string buffer_to_string(const boost::asio::streambuf &buffer);
+    std::string find_prefix(std::string uri);
 
 private:
     NginxConfigParser config_parser;
