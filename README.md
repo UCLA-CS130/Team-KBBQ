@@ -40,21 +40,13 @@ enum Status {
         INVALID_URI = 2,
         FILE_NOT_FOUND = 3
     };
-```
-`Init` initializes the handler. The `uri_prefix` is the value in the config file specified for the current handler. The config must be the child block for this handler ONLY.
-```cpp    
 virtual Status Init(const std::string& uri_prefix, const NginxConfig& config) = 0;
-```
-
-`HandleRequest` handles an HTTP request, and generates a response. 
-```cpp
 virtual Status HandleRequest(const Request& request, Response* response) = 0;
-```
-
-Use `CreateByName` to generate a pointer to the handler specified in the argument (eg.  `auto handler = RequestHandler::CreateByName("EchoHandler")`).
-```cpp
 static RequestHandler* CreateByName(const char* type);
 ```
+* `Init` initializes the handler. The `uri_prefix` is the value in the config file specified for the current handler. The config must be the child block for this handler ONLY.
+* `HandleRequest` handles an HTTP request, and generates a response. 
+* Use `CreateByName` to generate a pointer to the handler specified in the argument (eg.  `auto handler = RequestHandler::CreateByName("EchoHandler")`).
 
 #### Types of Handlers (Inherited from Request Handler class)
 * EchoHandler - repeats request 
@@ -72,11 +64,14 @@ bool load_configs(NginxConfig config);
 bool syntax_error(std::shared_ptr<NginxConfigStatement> parent_statement);
 bool add_handler(std::string attribute, NginxConfig child_config, const char* handler_name);
 ```
-Given a uri prefix, `get_config` goes through the handler map and returns the corresponding handler pointer if it exists. `get_port` returns the port number. 
+
+`get_handler calls `find_prefix` which will return the longest matching uri prefix if it exists. Then `get_handler` goes through the handler map and returns the corresponding handler pointer. `get_port` returns the port number. 
 ```cpp
-virtual RequestHandler* get_config(std::string attribute);
+virtual RequestHandler* get_handler(std::string uri);
+std::string find_prefix(std::string uri);
 unsigned short get_port();
 ```
+
 Main calls `run_server` which calls `session` internally, creating a socket and accepting requests. Most dispatch is handled in `session`.
 ```cpp
 void run_server(boost::asio::io_service& io_service);
@@ -94,14 +89,15 @@ In Webserver_main.cc:
   * `RequestHandler* handler = RequestHandler::CreatebyName(<handler_name>)`
   * `handler->Init(uri, child_block)`
   * Put handler into map (uri -> handler). Duplicate paths are illegal. 
+
 2. `void run_server(boost::asio::io_service& io_service)` creates socket and calls `void session(boost::asio::ip::tcp::socket sock)`.
 
 In Webserver.cc:  
 3. `void session(boost::asio::ip::tcp::socket sock)`
 * Read request from the socket
-* Parse into Request class
-* Find longest prefix in map
-* handler->handleRequest(...)
+* Parse into Request class with `Request::Parse(&request)`
+* Call `get_handler(uri)` which will return appropriate handler
+* `handler->HandleRequest(*request, &response)`
 * Write response to socket
     
 ## Build
