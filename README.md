@@ -30,8 +30,6 @@ void AddHeader(const std::string& header_name, const std::string& header_value);
 void SetBody(const std::string& body);
 std::string ToString();
 ```
-
-
 ### Request Handler
 ```cpp
 enum Status {
@@ -48,11 +46,14 @@ static RequestHandler* CreateByName(const char* type);
 * `HandleRequest` handles an HTTP request, and generates a response. 
 * Use `CreateByName` to generate a pointer to the handler specified in the argument (eg.  `auto handler = RequestHandler::CreateByName("EchoHandler")`).
 
-#### Types of Handlers (Inherited from Request Handler class)
-* EchoHandler - repeats request 
-* StaticFileHandler - opens specified file 
-* NotFoundHandler - returns 404
-* Status Handler - returns page with status of all handlers
+#### EchoHandler 
+Gives same request back to server
+
+#### StaticFileHandler
+Returns specified file to the server
+
+#### NotFoundHandler
+Returns 404 response
 
 ### Server
 
@@ -65,7 +66,7 @@ bool syntax_error(std::shared_ptr<NginxConfigStatement> parent_statement);
 bool add_handler(std::string attribute, NginxConfig child_config, const char* handler_name);
 ```
 
-`get_handler calls `find_prefix` which will return the longest matching uri prefix if it exists. Then `get_handler` goes through the handler map and returns the corresponding handler pointer. `get_port` returns the port number. 
+`get_handler` calls `find_prefix` which will return the longest matching uri prefix if it exists. Then `get_handler` goes through the handler map and returns the corresponding handler pointer. `get_port` returns the port number. 
 ```cpp
 virtual RequestHandler* get_handler(std::string uri);
 std::string find_prefix(std::string uri);
@@ -88,8 +89,7 @@ In Webserver_main.cc:
   * Parse first line
   * `RequestHandler* handler = RequestHandler::CreatebyName(<handler_name>)`
   * `handler->Init(uri, child_block)`
-  * Put handler into map (uri -> handler). Duplicate paths are illegal. 
-
+  * Put handler into map (uri -> handler). Duplicate paths are illegal.
 2. `void run_server(boost::asio::io_service& io_service)` creates socket and calls `void session(boost::asio::ip::tcp::socket sock)`.
 
 In Webserver.cc:  
