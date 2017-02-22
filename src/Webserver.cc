@@ -2,14 +2,11 @@
 // http://www.boost.org/doc/libs/1_55_0/doc/html/boost_asio/example/cpp11/echo/blocking_tcp_echo_server.cpp
 
 #include "request_handler.h"
-#include "echo_handler.h"
-#include "static_file_handler.h"
 #include "Webserver.h"
 #include <boost/asio.hpp>
 #include <cstdlib>
 #include <iostream>
 #include <thread>
-#include <iterator>
 #include <utility>
 
 using boost::asio::ip::tcp;
@@ -85,7 +82,7 @@ bool Webserver::syntax_error(std::shared_ptr<NginxConfigStatement> parent_statem
     return false;
 }
 
-bool Webserver::add_handler(std::string attribute, NginxConfig child_config, std::string handler_name) {
+bool Webserver::add_handler(std::string uri_prefix, NginxConfig child_config, std::string handler_name) {
     const char* name = handler_name.c_str();
 
     RequestHandler* handler = RequestHandler::CreateByName(name);
@@ -95,17 +92,17 @@ bool Webserver::add_handler(std::string attribute, NginxConfig child_config, std
         return false;
     }
 
-    if (handler->Init(attribute, child_config) != RequestHandler::Status::OK) {
+    if (handler->Init(uri_prefix, child_config) != RequestHandler::Status::OK) {
         std::cerr << "Error: Invalid handler config.\n";
         return false;
     }
-    std::unordered_map<std::string, RequestHandler*>::const_iterator found = handler_map.find(attribute);
+    std::unordered_map<std::string, RequestHandler*>::const_iterator found = handler_map.find(uri_prefix);
     // If mapping already exists, return false, else add to map
     if (found != handler_map.end()) {
-        std::cerr << "Error: " << attribute << " is already mapped.\n";
+        std::cerr << "Error: " << uri_prefix << " is already mapped.\n";
         return false;
     } else {
-        handler_map[attribute] = handler;
+        handler_map[uri_prefix] = handler;
     }
 
     return true;
@@ -123,14 +120,16 @@ bool Webserver::parse_config(const char* file_name) {
 	}
 }
 
-RequestHandler* Webserver::get_config(std::string attribute) {
-    std::unordered_map<std::string, RequestHandler*>::const_iterator found = handler_map.find(attribute);
-    // Get the attribute value
+RequestHandler* Webserver::get_handler(std::string uri) {
+    size_t last = uri.find_last_of("/");
+    std::string prefix = uri.substr(0, last);
+    std::unordered_map<std::string, RequestHandler*>::const_iterator found = handler_map.find(prefix);
+    // Get the uri_prefix
     if (found != handler_map.end()) {
         return found->second;
     } else {
-        found = handler_map.find("default");
         std::cerr << "Error: Handler not found.\n";
+        found = handler_map.find("default");
         return found->second;
     }
 }
@@ -151,11 +150,11 @@ void Webserver::session(tcp::socket sock) {
 
             std::string str = buffer_to_string(request);
             const std::unique_ptr<Request> req = Request::Parse(str);
-            RequestHandler* handler = get_config(req->uri());
+            RequestHandler* handler = get_handler(req->uri());
             Response resp;
 
             if (handler->HandleRequest(*req, &resp) == RequestHandler::Status::FILE_NOT_FOUND) {
-                handler = get_config("default");
+                handler = get_handler("default");
                 handler->HandleRequest(*req, &resp);
                 std::cerr << "Error: File not found.\n";
                 return;
@@ -190,19 +189,3 @@ std::string Webserver::buffer_to_string(const boost::asio::streambuf &buffer)
   std::string result(buffers_begin(bufs), buffers_begin(bufs) + buffer.size());
   return result;
 }
-
-// std::string Webserver::find_prefix(std::string uri) {
-//     std::string longest;
-//     for (auto it : handler_map) {
-//         std::string map = it.first;
-
-//         if (map.length() < longest.length()) {
-//             auto res = std::mismatch(map.begin(), map.end(), longest.begin())
-//         }
-
-//         auto res = std::mismatch(mapped)
-
-
-
-//     }
-// }
