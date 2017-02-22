@@ -6,6 +6,8 @@
 #include <boost/asio.hpp>
 #include <unordered_map>
 
+const int MAX_LENGTH = 4096;
+
 class Webserver {
 public:
     bool load_configs(NginxConfig config);

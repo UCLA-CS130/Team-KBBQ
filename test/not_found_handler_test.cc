@@ -10,7 +10,7 @@ TEST(NotFoundHandlerTest, Simple) {
     Response resp;
     NginxConfig config;
     std::string not_found_body = "HTTP/1.0 404 Not Found\r\n"
-                                "Content-Type: text/plain\r\n"
+                                "Content-Type: text/html\r\n"
                                 "Content-Length: 48\r\n\r\n"
                                 "<html><body><h1>404 Not Found</h1></body></html>";
 

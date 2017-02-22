@@ -169,19 +169,3 @@ TEST(FindPrefixTest, ValidPrefixTest) {
     std::string prefix = server.find_prefix("/foo/bar/a.txt");
     EXPECT_EQ("/foo", prefix);
 }
-
-//successful buffer to string
-TEST(BufStrTest, ValidBufStrTest) {
-    //Create necessary classes
-    Webserver server;
-    std::string output;
-    boost::asio::streambuf request;
-    std::ostream request_stream(&request);
-    request_stream << "asdfasdf";
-
-    //convert to string
-    output = server.buffer_to_string(request);
-
-    //expect that prefix is found
-    EXPECT_EQ("asdfasdf", output);
-}

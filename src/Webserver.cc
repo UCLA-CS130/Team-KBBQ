@@ -2,6 +2,7 @@
 // http://www.boost.org/doc/libs/1_55_0/doc/html/boost_asio/example/cpp11/echo/blocking_tcp_echo_server.cpp
 
 #include "request_handler.h"
+#include "server_status_tracker.h"
 #include "Webserver.h"
 #include <boost/asio.hpp>
 #include <cstdlib>
@@ -105,6 +106,8 @@ bool Webserver::add_handler(std::string uri_prefix, NginxConfig child_config, st
         handler_map[uri_prefix] = handler;
     }
 
+    ServerStatusTracker::GetInstance().RecordHandlerMapping(uri_prefix, handler_name);
+
     return true;
 }
 
@@ -145,15 +148,15 @@ unsigned short Webserver::get_port() {
 void Webserver::session(tcp::socket sock) {
     try {
         for (;;) {
-            boost::asio::streambuf request;
+            char request[MAX_LENGTH];
+            boost::system::error_code error;
 
             // Read the request.
-            boost::asio::read_until(sock, request, "\r\n\r\n");
+            sock.read_some(boost::asio::buffer(request), error);
 
             printf("Connected to client.\n");
 
-            std::string str = buffer_to_string(request);
-            const std::unique_ptr<Request> req = Request::Parse(str);
+            const std::unique_ptr<Request> req = Request::Parse(std::string(request));
             RequestHandler* handler = get_handler(req->uri());
             Response resp;
 
@@ -161,8 +164,10 @@ void Webserver::session(tcp::socket sock) {
                 handler = get_handler("default");
                 handler->HandleRequest(*req, &resp);
                 std::cerr << "Error: File not found.\n";
-                return;
             }
+
+            ServerStatusTracker::GetInstance().RecordRequest(req->uri(), resp.status_code());
+
             boost::asio::write(sock, boost::asio::buffer(resp.ToString()));
             return;
         }
@@ -182,16 +187,6 @@ void Webserver::run_server(boost::asio::io_service& io_service) {
         acceptor.accept(sock);
         std::thread(&Webserver::session, this, std::move(sock)).detach();
     }
-}
-
-//Taken from: https://gist.github.com/vladon/8b487e41cb3b49e172db
-std::string Webserver::buffer_to_string(const boost::asio::streambuf &buffer)
-{
-  using boost::asio::buffers_begin;
-  
-  auto bufs = buffer.data();
-  std::string result(buffers_begin(bufs), buffers_begin(bufs) + buffer.size());
-  return result;
 }
 
 std::string Webserver::find_prefix(std::string uri) {
