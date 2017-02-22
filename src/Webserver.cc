@@ -121,16 +121,22 @@ bool Webserver::parse_config(const char* file_name) {
 }
 
 RequestHandler* Webserver::get_handler(std::string uri) {
-    size_t last = uri.find_last_of("/");
-    std::string prefix = uri.substr(0, last);
-    std::unordered_map<std::string, RequestHandler*>::const_iterator found = handler_map.find(prefix);
+    std::unordered_map<std::string, RequestHandler*>::const_iterator found = handler_map.find(uri);
     // Get the uri_prefix
     if (found != handler_map.end()) {
         return found->second;
     } else {
-        std::cerr << "Error: Handler not found.\n";
-        found = handler_map.find("default");
-        return found->second;
+        size_t last = uri.find_last_of("/");
+        std::string prefix = uri.substr(0, last);
+        found = handler_map.find(prefix);
+        if (found != handler_map.end()) {
+            return found->second;
+        }
+        else {
+            std::cerr << "Error: Handler not found.\n";
+            found = handler_map.find("default");
+            return found->second;
+        }
     }
 }
 
