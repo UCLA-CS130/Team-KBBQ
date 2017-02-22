@@ -47,13 +47,19 @@ static RequestHandler* CreateByName(const char* type);
 * Use `CreateByName` to generate a pointer to the handler specified in the argument (eg.  `auto handler = RequestHandler::CreateByName("EchoHandler")`).
 
 #### EchoHandler 
-Gives same request back to server
+Gives the same request back to server. 
 
 #### StaticFileHandler
-Returns specified file to the server
+
+Returns specified file to the server. `get_file` returns the type of file based on the extension. `get_file` attempts to open file and returns a corresponding response code. Both functions are called in `HandleRequest`.
+
+```cpp
+std::string get_content_type(const std::string &filename);
+Response::ResponseCode get_file(const std::string& file_path, std::string* contents);
+```
 
 #### NotFoundHandler
-Returns 404 response
+Returns a 404 response.
 
 ### Server
 
@@ -90,6 +96,7 @@ In Webserver_main.cc:
   * `RequestHandler* handler = RequestHandler::CreatebyName(<handler_name>)`
   * `handler->Init(uri, child_block)`
   * Put handler into map (uri -> handler). Duplicate paths are illegal.
+
 2. `void run_server(boost::asio::io_service& io_service)` creates socket and calls `void session(boost::asio::ip::tcp::socket sock)`.
 
 In Webserver.cc:  
