@@ -2,62 +2,85 @@ CXX=g++
 CXXOPTIMIZE= -O2
 CXXFLAGS= -g -Wall -pthread -std=c++11 $(CXXOPTIMIZE)
 COVFLAGS=
-SERVER_CLASSES=config_parser.cc Webserver.h Webserver_main.cc HttpResponse.h HttpResponse.cc HttpRequest.h HttpRequest.cc
+SERVER_CLASSES= $(wildcard src/*.cc)
 
+SRC_DIR=src
+TEST_DIR=test
 GTEST_DIR=googletest/googletest
 GMOCK_DIR=googletest/googlemock
-GTEST_FLAGS=-std=c++11 -isystem ${GTEST_DIR}/include -I${GTEST_DIR} -pthread
-GMOCK_FLAGS=-std=c++11 -isystem ${GTEST_DIR}/include -I${GTEST_DIR} -isystem ${GMOCK_DIR}/include -I${GMOCK_DIR} -pthread
-GTEST_CLASSES=${GTEST_DIR}/src/gtest_main.cc libgtest.a
-GMOCK_CLASSES=${GMOCK_DIR}/src/gmock_main.cc libgmock.a
 
-all: Webserver config_parser Webserver_test config_parser_test
+GTEST_FLAGS=-std=c++11 -isystem $(GTEST_DIR)/include -isystem $(GMOCK_DIR)/include -pthread
+GTEST_INCL=-I$(GTEST_DIR)
+GMOCK_INCL=-I$(GTEST_DIR) -I$(GMOCK_DIR)
+
+GTEST_CLASSES=libgtest.a
+GMOCK_CLASSES=libgmock.a
+
+
+all: Webserver Webserver_test config_parser_test \
+	 server_status_tracker_test \
+	 request_handler_test echo_handler_test static_file_handler_test not_found_handler_test
 
 Webserver: $(SERVER_CLASSES)
-	$(CXX) -o $@ $^ $@.cc $(CXXFLAGS) -lboost_system
+	$(CXX) -o $@ $^ $(CXXFLAGS) -lboost_system
 
-Webserver_test: Webserver.cc config_parser.cc HttpRequest.cc HttpResponse.cc $(GMOCK_CLASSES)
-	$(CXX) -o $@ $^ $@.cc $(GMOCK_FLAGS) $(COVFLAGS) -lboost_system
+Webserver_test: $(filter-out $(SRC_DIR)/Webserver_main.cc, $(SERVER_CLASSES)) $(GTEST_CLASSES)
+	$(CXX) -o $@ $^ $(TEST_DIR)/$@.cc -I$(SRC_DIR) $(GTEST_FLAGS) $(COVFLAGS) -lboost_system
 
-config_parser: config_parser_main.cc
-	$(CXX) -o $@ $^ $@.cc $(CXXFLAGS)
+config_parser_test: $(SRC_DIR)/config_parser.cc $(GTEST_CLASSES)
+	$(CXX) -o $@ $^ $(TEST_DIR)/$@.cc -I$(SRC_DIR) $(GTEST_FLAGS) $(COVFLAGS)
 
-config_parser_test: config_parser.cc $(GTEST_CLASSES)
-	$(CXX) -o $@ $^ $@.cc $(GTEST_FLAGS) $(COVFLAGS)
+request_handler_test: $(SRC_DIR)/request_handler.cc $(GTEST_CLASSES)
+	$(CXX) -o $@ $^ $(TEST_DIR)/$@.cc -I$(SRC_DIR) $(GTEST_FLAGS) $(COVFLAGS)
 
-HttpRequest_test: HttpRequest.cc $(GTEST_CLASSES) 
-	$(CXX) -o $@ $^ $@.cc $(GTEST_FLAGS) $(COVFLAGS) -lboost_system
+echo_handler_test: $(SRC_DIR)/request_handler.cc $(SRC_DIR)/echo_handler.cc $(GMOCK_CLASSES)
+	$(CXX) -o $@ $^ $(TEST_DIR)/$@.cc -I$(SRC_DIR) $(GTEST_FLAGS) $(COVFLAGS)
 
-HttpResponse_test: HttpResponse.cc $(GTEST_CLASSES)
-	$(CXX) -o $@ $^ $@.cc $(GTEST_FLAGS) $(COVFLAGS) -lboost_system
+static_file_handler_test: $(SRC_DIR)/request_handler.cc $(SRC_DIR)/static_file_handler.cc $(SRC_DIR)/config_parser.cc $(GMOCK_CLASSES)
+	$(CXX) -o $@ $^ $(TEST_DIR)/$@.cc -I$(SRC_DIR) $(GTEST_FLAGS) $(COVFLAGS)
 
-libgtest.a: gtest-all.o
+not_found_handler_test: $(SRC_DIR)/request_handler.cc $(SRC_DIR)/not_found_handler.cc $(GMOCK_CLASSES)
+	$(CXX) -o $@ $^ $(TEST_DIR)/$@.cc -I$(SRC_DIR) $(GTEST_FLAGS) $(COVFLAGS)
+
+status_handler_test: $(SRC_DIR)/request_handler.cc $(SRC_DIR)/status_handler.cc $(SRC_DIR)/server_status_tracker.cc $(GTEST_CLASSES)
+	$(CXX) -o $@ $^ $(TEST_DIR)/$@.cc -I$(SRC_DIR) $(GTEST_FLAGS) $(COVFLAGS)
+
+server_status_tracker_test: $(SRC_DIR)/request_handler.cc $(SRC_DIR)/server_status_tracker.cc $(GTEST_CLASSES)
+	$(CXX) -o $@ $^ $(TEST_DIR)/$@.cc -I$(SRC_DIR) $(GTEST_FLAGS) $(COVFLAGS)
+
+gtest-all.o: $(GTEST_DIR)/src/gtest-all.cc
+	$(CXX) $(GTEST_FLAGS) $(GTEST_INCL) -c $(GTEST_DIR)/src/gtest-all.cc
+
+gtest_main.o: $(GTEST_DIR)/src/gtest_main.cc
+	$(CXX) $(GTEST_FLAGS) $(GTEST_INCL) -c $(GTEST_DIR)/src/gtest_main.cc
+
+libgtest.a: gtest-all.o gtest_main.o
 	ar -rv $@ $^
 
-gtest-all.o: ${GTEST_DIR}/src/gtest-all.cc
-	$(CXX) $(GTEST_FLAGS) -c ${GTEST_DIR}/src/gtest-all.cc
+gmock-all.o : $(GMOCK_DIR)/src/gmock-all.cc
+	$(CXX) $(GTEST_FLAGS) $(GMOCK_INCL) -c $(GMOCK_DIR)/src/gmock-all.cc
 
-libgmock.a: gmock-all.o gtest-all2.o
+gmock_main.o : $(GMOCK_DIR)/src/gmock_main.cc
+	$(CXX) $(GTEST_FLAGS) $(GMOCK_INCL) -c $(GMOCK_DIR)/src/gmock_main.cc
+
+libgmock.a : gmock-all.o gtest-all.o gmock_main.o
 	ar -rv $@ $^
-
-gtest-all2.o: ${GTEST_DIR}/src/gtest-all.cc
-	$(CXX) $(GMOCK_FLAGS) -c ${GTEST_DIR}/src/gtest-all.cc -o gtest-all2.o
-
-gmock-all.o: ${GMOCK_DIR}/src/gmock-all.cc
-	$(CXX) $(GMOCK_FLAGS) -c ${GMOCK_DIR}/src/gmock-all.cc
 
 coverage: COVFLAGS += -fprofile-arcs -ftest-coverage
-coverage: Webserver_test config_parser_test HttpRequest_test HttpResponse_test
-	./Webserver_test && gcov -r Webserver.cc;
-	./config_parser_test && gcov -r config_parser.cc;
-	./HttpRequest_test && gcov -r HttpRequest.cc;
-	./HttpResponse_test && gcov -r HttpResponse.cc;
+coverage: Webserver_test status_handler_test server_status_tracker_test \
+		  echo_handler_test static_file_handler_test not_found_handler_test request_handler_test config_parser_test
+	./Webserver_test && gcov -s src -r Webserver.cc;
+	./config_parser_test && gcov -s src -r config_parser.cc;
+	./request_handler_test && gcov -s src -r request_handler.cc;
+	./echo_handler_test && gcov -s src -r echo_handler.cc;
+	./static_file_handler_test && gcov -s src -r static_file_handler.cc;
+	./not_found_handler_test && gcov -s src -r not_found_handler.cc;
+	./server_status_tracker_test && gcov -s src -r server_status_tracker.cc;
 
 test:
-	python3 integration_test.py
+	python3 $(TEST_DIR)/integration_test.py
 
 clean:
 	rm -rf *.o *.a *~ *.gch *.swp *.dSYM *.gcno *.gcda *.gcov Webserver config_parser *_test *.tar.gz
 
 .PHONY: all clean test coverage
-	
