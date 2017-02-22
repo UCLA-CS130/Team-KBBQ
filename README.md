@@ -7,7 +7,7 @@
 To create a request object call `auto request = Request::Parse(request)`. Other functions return information on the parsed request.
 
 ```cpp
-std::unique_ptr<Request> Parse(const std::string& raw_request);
+static std::unique_ptr<Request> Parse(const std::string& raw_request);
 std::string raw_request() const;
 std::string method() const;
 std::string uri() const;
@@ -40,27 +40,53 @@ enum Status {
         INVALID_URI = 2,
         FILE_NOT_FOUND = 3
     };
-    
-virtual Status Init(const std::string& uri_prefix, const NginxConfig& config) = 0;
 ```
 `Init` initializes the handler. The `uri_prefix` is the value in the config file specified for the current handler. The config must be the child block for this handler ONLY.
+```cpp    
+virtual Status Init(const std::string& uri_prefix, const NginxConfig& config) = 0;
+```
+
+`HandleRequest` handles an HTTP request, and generates a response. 
 ```cpp
 virtual Status HandleRequest(const Request& request, Response* response) = 0;
 ```
-`HandleRequest` handles an HTTP request, and generates a response. 
+
+Use `CreateByName` to generate a pointer to the handler specified in the argument (eg.  `auto handler = RequestHandler::CreateByName("EchoHandler")`).
 ```cpp
 static RequestHandler* CreateByName(const char* type);
 ```
-Use `CreateByName` to generate a pointer to the handler specified in the argument (eg.  `auto handler = RequestHandler::CreateByName("EchoHandler")`).
 
 #### Types of Handlers (Inherited from Request Handler class)
-* EchoHandler - returns request 
-* StaticFileHandler - returns specified file 
+* EchoHandler - repeats request 
+* StaticFileHandler - opens specified file 
+* NotFoundHandler - returns 404
+* Status Handler - returns page with status of all handlers
+
+### Server
+
+`parse_config` parses the config file while `load_configs` and stores all the information. Any errors during parsing will result in `syntax_error`. `add_handler` initializes the specified handler and stores the handler pointer in a handler map (prefix -> handler).
+
+```cpp
+bool parse_config(const char* file_name);
+bool load_configs(NginxConfig config);
+bool syntax_error(std::shared_ptr<NginxConfigStatement> parent_statement);
+bool add_handler(std::string attribute, NginxConfig child_config, const char* handler_name);
+```
+Given a uri prefix, `get_config` goes through the handler map and returns the corresponding handler pointer if it exists. `get_port` returns the port number. 
+```cpp
+virtual RequestHandler* get_config(std::string attribute);
+unsigned short get_port();
+```
+Main calls `run_server` which calls `session` internally, creating a socket and accepting requests. Most dispatch is handled in `session`.
+```cpp
+void run_server(boost::asio::io_service& io_service);
+void session(boost::asio::ip::tcp::socket sock);
+```
 
 ### Dispatch
 
 In Webserver_main.cc:  
-1. `bool parse_config(const char* file_name)`
+1. `bool parse_config(const char* file_name)` parses config file.
 * Ignore comments
 * Save the port number
 * For each handler block:
@@ -68,7 +94,7 @@ In Webserver_main.cc:
   * `RequestHandler* handler = RequestHandler::CreatebyName(<handler_name>)`
   * `handler->Init(uri, child_block)`
   * Put handler into map (uri -> handler). Duplicate paths are illegal. 
-2. `void run_server(boost::asio::io_service& io_service)` creates socket and calls `void session(boost::asio::ip::tcp::socket sock)`.  
+2. `void run_server(boost::asio::io_service& io_service)` creates socket and calls `void session(boost::asio::ip::tcp::socket sock)`.
 
 In Webserver.cc:  
 3. `void session(boost::asio::ip::tcp::socket sock)`
@@ -80,10 +106,6 @@ In Webserver.cc:
     
 ## Build
 
-```
-make Webserver
-./Webserver <config-file>
-```
 ### Config File Format
 
 Specify a handler for each block. If there is no root folder, leave the block empty. 
@@ -102,4 +124,16 @@ path /<uri> <handler-name> {
 default <handler-name>{
     
 }
+```
+### Run server
+
+```
+make Webserver
+./Webserver <config-file>
+```
+### Test
+
+```
+make test //runs integration test
+make coverage //runs all unit tests
 ```
