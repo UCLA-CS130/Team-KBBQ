@@ -15,7 +15,7 @@ RequestHandler::Status StatusHandler::HandleRequest(const Request& request, Resp
     contents << "<!DOCTYPE html><html>" <<
                 "<h1>Server Status</h1>" <<
                 "<h2>Requests</h2>" <<
-                "<p>Total Requests: " << num_requests <<
+                "<p>Total Requests: " << num_requests << "</p>" <<
                 "<table>" <<
                 "<th><td>Request URL</td><td>Response Code</td></th>";
 

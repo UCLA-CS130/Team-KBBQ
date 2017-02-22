@@ -38,6 +38,9 @@ static_file_handler_test: $(SRC_DIR)/request_handler.cc $(SRC_DIR)/static_file_h
 not_found_handler_test: $(SRC_DIR)/request_handler.cc $(SRC_DIR)/not_found_handler.cc $(GMOCK_CLASSES)
 	$(CXX) -o $@ $^ $(TEST_DIR)/$@.cc -I$(SRC_DIR) $(GMOCK_FLAGS) $(COVFLAGS)
 
+status_handler_test: $(SRC_DIR)/request_handler.cc $(SRC_DIR)/status_handler.cc $(SRC_DIR)/server_status_tracker.cc $(GTEST_CLASSES)
+	$(CXX) -o $@ $^ $(TEST_DIR)/$@.cc -I$(SRC_DIR) $(GTEST_FLAGS) $(COVFLAGS)
+
 server_status_tracker_test: $(SRC_DIR)/request_handler.cc $(SRC_DIR)/server_status_tracker.cc $(GTEST_CLASSES)
 	$(CXX) -o $@ $^ $(TEST_DIR)/$@.cc -I$(SRC_DIR) $(GTEST_FLAGS) $(COVFLAGS)
 
@@ -57,7 +60,8 @@ gmock-all.o: ${GMOCK_DIR}/src/gmock-all.cc
 	$(CXX) $(GMOCK_FLAGS) -c ${GMOCK_DIR}/src/gmock-all.cc
 
 coverage: COVFLAGS += -fprofile-arcs -ftest-coverage
-coverage: Webserver_test echo_handler_test static_file_handler_test not_found_handler_test config_parser_test request_handler_test server_status_tracker_test
+coverage: Webserver_test echo_handler_test static_file_handler_test not_found_handler_test
+		  config_parser_test request_handler_test status_handler_test server_status_tracker_test
 	./Webserver_test && gcov -s src -r Webserver.cc;
 	./config_parser_test && gcov -s src -r config_parser.cc;
 	./request_handler_test && gcov -s src -r request_handler.cc;
