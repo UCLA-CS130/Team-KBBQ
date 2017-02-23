@@ -171,6 +171,18 @@ TEST_F(PrefixHandlerTest, ValidPrefixTest) {
     EXPECT_EQ("/foo", prefix);
 }
 
+//successful prefix find
+TEST_F(PrefixHandlerTest, InvalidPrefixTest) {
+
+    //create a config
+    bool loaded_config = parse_load();
+
+    //expect that prefix is found
+    ASSERT_TRUE(loaded_config);
+    std::string prefix = server.find_prefix("/fooo/a.txt");
+    EXPECT_EQ("", prefix);
+}
+
 //successful handler find
 TEST_F(PrefixHandlerTest, ValidGetHandlerTest) {
 
