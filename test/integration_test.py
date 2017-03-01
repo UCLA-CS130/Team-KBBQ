@@ -53,7 +53,7 @@ def main():
 
     ### STATIC FILE HANDLER ###
     print('Creating example static files...')
-    os.makedirs('integration_test_files/')
+    os.makedirs('integration_test_files/', exist_ok=True)
     path = 'integration_test_files/asdf.txt'
     test_file = open(path,'w')
     test_file.write('asdf')
@@ -70,6 +70,15 @@ def main():
     print('Sending nonexistent file request...')
     out = check_output(["curl", "-s", "localhost:8080/static/does_not_exist.txt"])
     expected = b'<html><body><h1>404 Not Found</h1></body></html>'
+
+    print('Checking response output...')
+    expected_output(out, expected, server)
+
+    ### MULTITHREADING ###
+    print('Opening connection and sending file request...')
+    Popen(['nc', 'localhost', '8080'], stdout=DEVNULL)
+    out = check_output(["curl", "-s", "localhost:8080/static/asdf.txt"])
+    expected = b'asdf'
 
     print('Checking response output...')
     expected_output(out, expected, server)
