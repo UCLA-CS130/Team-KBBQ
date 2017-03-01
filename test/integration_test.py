@@ -53,7 +53,6 @@ def main():
 
     ### STATIC FILE HANDLER ###
     print('Creating example static files...')
-    #if not(os.path.exists('integration_test_files/')):
     os.makedirs('integration_test_files/', exist_ok=True)
     path = 'integration_test_files/asdf.txt'
     test_file = open(path,'w')
