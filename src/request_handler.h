@@ -21,6 +21,11 @@ class Request {
     std::string method() const;
     virtual std::string uri() const;
     std::string version() const;
+    
+    //New function to update header for reverse_proxy
+    //If the header doesn't exist, it is added to the request
+    void update_header(std::pair<std::string, std::string> header);
+    void update_uri(std::string newUri);
 
     using Headers = std::vector<std::pair<std::string, std::string>>;
     Headers headers() const;
@@ -28,6 +33,8 @@ class Request {
     std::string body() const;
 
  private:
+    void update_raw_request();
+  
     std::string raw_request_;
     std::string method_;
     std::string uri_;
@@ -50,6 +57,7 @@ class Response {
  public:
     enum ResponseCode {
         OK = 200,
+        FOUND = 302,
         BAD_REQUEST = 400,
         NOT_FOUND = 404,
         NOT_IMPLEMENTED = 501

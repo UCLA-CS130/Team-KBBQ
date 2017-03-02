@@ -60,6 +60,7 @@ std::unique_ptr<Request> Request::Parse(const std::string& raw_request){
             }
         }
     }
+    std::cout << std::endl;
 
     return request;
 }
@@ -88,6 +89,41 @@ std::string Request::body() const {
     return body_;
 }
 
+void Request::update_header(std::pair<std::string, std::string> header){
+    bool updated = false;
+
+    for (auto it = headers_.begin(); it != headers_.end(); it++){
+    if (it->first == header.first){
+      it->second = header.second;
+      updated = true;
+      break;
+    }
+  }
+  if (!updated){
+    headers_.push_back(header);
+  }
+  update_raw_request();
+}
+
+void Request::update_uri(std::string newUri){
+  uri_ = newUri;
+  update_raw_request();
+}
+
+void Request::update_raw_request(){
+  std::string new_raw;
+  new_raw = method_ + " " + uri_ + " " + version() + "\r\n";
+  
+  for (auto header : headers_){
+    new_raw += header.first + ": " + header.second + "\r\n";
+  }
+
+  new_raw += "\r\n";
+  new_raw += body_;
+  new_raw += "\r\n";
+  
+  raw_request_ = new_raw; 
+}
 /*
  * RESPONSE
  */
@@ -96,6 +132,9 @@ void Response::SetStatus(const ResponseCode response_code) {
     switch (response_code) {
         case ResponseCode::OK:
             status_ = "200 OK";
+            break;
+        case ResponseCode::FOUND:
+            status_ = "302 Found";
             break;
         case ResponseCode::BAD_REQUEST:
             status_ = "400 Bad Request";
