@@ -3,12 +3,16 @@
 port 2020;  # This is also a comment.
 
 path /s StaticFileHandler {
-  root ex;
+  root /home/mpgermano/CS130/Please-Hire-Us/www;
 }
 
 path /echo EchoHandler {}
 
 path /status StatusHandler {}
+
+path /reverse ReverseProxyHandler{
+  host www.ucla.edu;
+}
 
 # Default response handler if no handlers match.
 default NotFoundHandler {}

@@ -142,6 +142,9 @@ void Response::SetStatus(const ResponseCode response_code) {
         case ResponseCode::NOT_FOUND:
             status_ = "404 Not Found";
             break;
+        case ResponseCode::INTERNAL_SERVER_ERROR:
+            status_ = "500 Internal Server Error";
+            break;
         case ResponseCode::NOT_IMPLEMENTED:
             status_ = "501 Not Implemented";
             break;
