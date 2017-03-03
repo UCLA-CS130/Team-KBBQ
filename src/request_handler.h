@@ -57,6 +57,7 @@ class Response {
  public:
     enum ResponseCode {
         OK = 200,
+        MOVED_PERMANENTLY = 301,
         FOUND = 302,
         BAD_REQUEST = 400,
         NOT_FOUND = 404,
@@ -64,18 +65,26 @@ class Response {
         NOT_IMPLEMENTED = 501
     };
 
+    Response& operator=(const Response& rhs);
+    static std::unique_ptr<Response> Parse(const std::string& raw_response);
+
     void SetStatus(const ResponseCode response_code);
     void AddHeader(const std::string& header_name, const std::string& header_value);
     void SetBody(const std::string& body);
-
+    bool convertCode(const int& code, ResponseCode& rc);
+    
+    std::string GetHeader(const std::string& headerName);
     std::string ToString();
     ResponseCode status_code();
-
+    
+    void PrintHeaders();
  private:
     ResponseCode status_code_;
+    std::string raw_response_;
+    std::string version_;
     std::string status_;
-    std::vector<std::pair<std::string, std::string>> headers_;
     std::string response_body_;
+    std::vector<std::pair<std::string, std::string>> headers_;
 };
 
 // Represents the parent of all request handlers. Implementations should expect to
@@ -86,7 +95,8 @@ class RequestHandler {
         OK = 0,
         INVALID_CONFIG = 1,
         INVALID_URI = 2,
-        FILE_NOT_FOUND = 3
+        FILE_NOT_FOUND = 3,
+        PROXY_ERROR = 4
     };
 
     // Initializes the handler. Returns true if successful.

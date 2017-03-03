@@ -12,12 +12,12 @@ class ReverseProxyHandler : public RequestHandler {
     std::string getRawResponse(boost::asio::ip::tcp::socket& socket);
  private:
    Request TransformRequest(const Request& incoming_request);
-   bool TranslateResponse(Response& received_response);
    Response::ResponseCode ForwardRequest(const Request& request, Response* response, std::string host);
-
+   void ParseLocation(const std::string location, std::string& host, std::string& uri);
+   
    std::string prefix_;
    std::string host_;
-   std::string path_;
+   std::string urlpath_;
 
    int port_;
 };
