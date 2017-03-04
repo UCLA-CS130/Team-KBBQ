@@ -18,8 +18,7 @@ class ReverseProxyHandler : public RequestHandler {
    std::string prefix_;
    std::string host_;
    std::string urlpath_;
-
-   int port_;
+   std::string port_;
 };
 
 REGISTER_REQUEST_HANDLER(ReverseProxyHandler);

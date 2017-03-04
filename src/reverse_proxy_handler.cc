@@ -6,15 +6,14 @@
 
 RequestHandler::Status ReverseProxyHandler::Init(const std::string& uri_prefix, const NginxConfig& config) {
     prefix_ = uri_prefix;
-    std::string port_str = "";
     host_ = "";
     urlpath_ = "";
+    port_ = "";
 
     std::string fullHost = "";
     for (auto statement : config.statements_){
       if (statement->tokens_.size() > 1 && statement->tokens_[0] == "port"){
-	port_str = statement->tokens_[1];
-	port_ = stoi(port_str);
+	port_ = statement->tokens_[1];
       }
       else if (statement->tokens_.size() > 1 && statement->tokens_[0] == "host"){
         fullHost = statement->tokens_[1];
@@ -36,6 +35,10 @@ RequestHandler::Status ReverseProxyHandler::Init(const std::string& uri_prefix, 
     }
     if (urlpath_.back() != '/')
       urlpath_ += "/";
+
+    if (port_ == ""){
+      port_ = "80";
+    }
 
     return RequestHandler::Status::OK;
 }
@@ -62,9 +65,6 @@ RequestHandler::Status ReverseProxyHandler::HandleRequest(const Request& request
 
       Response::ResponseCode rc = response->status_code();
       
-      std::cout << "~~~~Reverse Proxy Response~~~~" << std::endl;
-      response->PrintHeaders();
-
       //If not redirected, then break and return response
       if (rc != Response::ResponseCode::FOUND && rc != Response::ResponseCode::MOVED_PERMANENTLY){
         break;
@@ -84,7 +84,6 @@ RequestHandler::Status ReverseProxyHandler::HandleRequest(const Request& request
       transformedRequest.update_header(nextHostPair);
       transformedRequest.update_uri(nextURI); 
      
-      std::cout << "Updated Request:" << std::endl << transformedRequest.raw_request() << std::endl;
     }
     
     return RequestHandler::Status::OK;    
@@ -123,7 +122,6 @@ Request ReverseProxyHandler::TransformRequest(const Request& incoming_request) {
 
   transformedRequest->update_uri(updatedURI);
  
-  std::cout << "UPDATED URI:" <<  updatedURI << std::endl;
   return (*transformedRequest);
 }
 
@@ -152,7 +150,7 @@ Response::ResponseCode ReverseProxyHandler::ForwardRequest(const Request& reques
 
 
     boost::asio::ip::tcp::resolver resolver(io_service);
-    boost::asio::ip::tcp::resolver::query query(host, "http");
+    boost::asio::ip::tcp::resolver::query query(host, port_);
     boost::asio::ip::tcp::resolver::iterator it = resolver.resolve(query, ec), end;
 
     if (ec) {

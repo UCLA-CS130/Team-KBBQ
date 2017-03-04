@@ -12,7 +12,13 @@ path /status StatusHandler {}
 
 path /reverse ReverseProxyHandler{
   host www.ucla.edu;
+  port 80;
 }
+
+path / ReverseProxyHandler{
+  host ucla.edu;
+}
+
 
 # Default response handler if no handlers match.
 default NotFoundHandler {}
