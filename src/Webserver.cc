@@ -154,6 +154,7 @@ void Webserver::session(tcp::socket sock) {
             // Read the request.
             size_t request_length = sock.read_some(boost::asio::buffer(request), error);
 
+            printf("Connected to client.\n");
 
             const std::unique_ptr<Request> req = Request::Parse(std::string(request, request_length));
             RequestHandler* handler = get_handler(req->uri());
@@ -191,31 +192,17 @@ void Webserver::run_server(boost::asio::io_service& io_service) {
 std::string Webserver::find_prefix(std::string uri) {
     std::string longest = "";
     size_t last = uri.find_last_of("/");
-    if (last == 0)
-      last++;
-    std::string startPrefix = uri.substr(0, last);
+    std::string prefix = uri.substr(0, last);
 
-    std::string prefix = startPrefix;
-    std::size_t pos = prefix.size();
+    for (auto it : handler_map) {
+        std::string map = it.first;
 
-    //Fix to test for possibly smaller prefixes, like /
-    while (pos > 0){
-      if (startPrefix[pos-1] != '/'){
-        pos--;
-        continue;
-      }
-      prefix = startPrefix.substr(0, pos);
-      for (auto it : handler_map) {
-          std::string map = it.first;
-
-          if (prefix.find(map) == 0 && (prefix.find("/", map.length()) == map.length() || 
-              map.length() == prefix.length())) {
-              if (map.length() > longest.length()) {
-                  longest = map;
-              }
-          }
-      }
-      pos--;
+        if (prefix.find(map) == 0 && (prefix.find("/", map.length()) == map.length() || 
+            map.length() == prefix.length())) {
+            if (map.length() > longest.length()) {
+                longest = map;
+            }
+        }
     }
 
     return longest;
