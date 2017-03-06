@@ -50,3 +50,90 @@ TEST(ReverseProxyHandlerTests, ParseLocationTest) {
    ASSERT_EQ(host,"www.ucla.edu");
    ASSERT_EQ(uri,"/dir1/dir2");    
 }
+
+// Init Tests
+TEST(ReverseProxyHandlerTests, ValidInitTest) {
+    ReverseProxyHandler rp_handler;
+    NginxConfig config;
+
+    config.statements_.emplace_back(new NginxConfigStatement);
+    config.statements_.back().get()->tokens_.push_back("host");
+    config.statements_.back().get()->tokens_.push_back("www.ucla.edu");
+    config.statements_.emplace_back(new NginxConfigStatement);
+    config.statements_.back().get()->tokens_.push_back("port");
+    config.statements_.back().get()->tokens_.push_back("8080");
+
+
+    EXPECT_EQ(rp_handler.Init("/reverse", config), RequestHandler::Status::OK);
+}
+
+TEST(ReverseProxyHandlerTests, InvalidInitTest) {
+    ReverseProxyHandler rp_handler;
+    NginxConfig config;
+
+    config.statements_.emplace_back(new NginxConfigStatement);
+    config.statements_.back().get()->tokens_.push_back("host");
+    config.statements_.emplace_back(new NginxConfigStatement);
+    config.statements_.back().get()->tokens_.push_back("port");
+    config.statements_.back().get()->tokens_.push_back("8080");
+
+
+    EXPECT_EQ(rp_handler.Init("/reverse", config), RequestHandler::Status::INVALID_CONFIG);
+}
+
+// HandleRequest Tests
+TEST(ReverseProxyHandlerTests, ValidHandleRequestTest) {
+    ReverseProxyHandler rp_handler;
+    NginxConfig config;
+
+    config.statements_.emplace_back(new NginxConfigStatement);
+    config.statements_.back().get()->tokens_.push_back("host");
+    config.statements_.back().get()->tokens_.push_back("ucla.edu");
+    config.statements_.emplace_back(new NginxConfigStatement);
+    config.statements_.back().get()->tokens_.push_back("port");
+    config.statements_.back().get()->tokens_.push_back("80");
+
+    rp_handler.Init("/reverse", config);
+
+    std::unique_ptr<Request> req = Request::Parse("GET / HTTP/1.0\r\n\r\n");
+    Response res;
+
+    EXPECT_EQ(rp_handler.HandleRequest(*req, &res), RequestHandler::Status::OK);
+}
+
+// ForwardRequest Test
+TEST(ReverseProxyHandlerTests, ValidForwardRequestTest) {
+    ReverseProxyHandler rp_handler;
+    NginxConfig config;
+    config.statements_.emplace_back(new NginxConfigStatement);
+    config.statements_.back().get()->tokens_.push_back("host");
+    config.statements_.back().get()->tokens_.push_back("ucla.edu");
+    config.statements_.emplace_back(new NginxConfigStatement);
+    config.statements_.back().get()->tokens_.push_back("port");
+    config.statements_.back().get()->tokens_.push_back("80");
+
+    rp_handler.Init("/reverse", config);
+    std::string request = "GET /echo HTTP/1.1\r\nUser-Agent: curl/7.35.0\r\nHost: localhost:80\r\nConnection: open\r\nAccept: */*\r\n\r\n\r\n";
+  
+    auto req = Request::Parse(request);
+    Request transformedReq;
+    Response res;
+    transformedReq = rp_handler.TransformRequest(*req);
+
+    EXPECT_EQ(rp_handler.ForwardRequest(transformedReq, &res, "ucla.edu"), Response::OK);
+}
+
+TEST(ReverseProxyHandlerTests, InvalidForwardRequestTest) {
+    ReverseProxyHandler rp_handler;
+    NginxConfig config; // config not set up properly, should lead to internal server error
+
+    rp_handler.Init("/reverse", config);
+    std::string request = "GET /echo HTTP/1.1\r\nUser-Agent: curl/7.35.0\r\nHost: localhost:80\r\nConnection: open\r\nAccept: */*\r\n\r\n\r\n";
+  
+    auto req = Request::Parse(request);
+    Request transformedReq;
+    Response res;
+    transformedReq = rp_handler.TransformRequest(*req);
+
+    EXPECT_EQ(rp_handler.ForwardRequest(transformedReq, &res, "ucla.edu"), Response::INTERNAL_SERVER_ERROR);
+}
