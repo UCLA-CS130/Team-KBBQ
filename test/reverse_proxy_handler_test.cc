@@ -31,12 +31,12 @@ TEST(ReverseProxyHandlerTests, TransformRequestTest) {
     ReverseProxyHandler rp_handler;
     NginxConfig config;
     rp_handler.Init("/", config);
-    std::string request = "GET /echo HTTP/1.1\r\nUser-Agent: curl/7.35.0\r\nHost: localhost:8080\r\nConnection: open\r\nAccept: */*\r\n\r\n\r\n";
+    std::string request = "GET /echo HTTP/1.0\r\nUser-Agent: curl/7.35.0\r\nHost: localhost:8080\r\nConnection: open\r\nAccept: */*\r\n\r\n\r\n";
   
     auto req = Request::Parse(request);
     Request transformedReq;
     transformedReq = rp_handler.TransformRequest(*req);
-    std::string expectedRequest = "GET echo HTTP/1.1\r\nUser-Agent: curl/7.35.0\r\nHost: \r\nConnection: close\r\nAccept: */*\r\n\r\n\r\r\n";
+    std::string expectedRequest = "GET echo HTTP/1.0\r\nUser-Agent: curl/7.35.0\r\nHost: \r\nConnection: close\r\nAccept: */*\r\n\r\n\r\r\n";
     ASSERT_EQ(transformedReq.raw_request(), expectedRequest);
 }
 
@@ -113,7 +113,7 @@ TEST(ReverseProxyHandlerTests, ValidForwardRequestTest) {
     config.statements_.back().get()->tokens_.push_back("80");
 
     rp_handler.Init("/reverse", config);
-    std::string request = "GET /echo HTTP/1.1\r\nUser-Agent: curl/7.35.0\r\nHost: localhost:80\r\nConnection: open\r\nAccept: */*\r\n\r\n\r\n";
+    std::string request = "GET /echo HTTP/1.0\r\nUser-Agent: curl/7.35.0\r\nHost: localhost:80\r\nConnection: open\r\nAccept: */*\r\n\r\n\r\n";
   
     auto req = Request::Parse(request);
     Request transformedReq;
@@ -128,7 +128,7 @@ TEST(ReverseProxyHandlerTests, InvalidForwardRequestTest) {
     NginxConfig config; // config not set up properly, should lead to internal server error
 
     rp_handler.Init("/reverse", config);
-    std::string request = "GET /echo HTTP/1.1\r\nUser-Agent: curl/7.35.0\r\nHost: localhost:80\r\nConnection: open\r\nAccept: */*\r\n\r\n\r\n";
+    std::string request = "GET /echo HTTP/1.0\r\nUser-Agent: curl/7.35.0\r\nHost: localhost:80\r\nConnection: open\r\nAccept: */*\r\n\r\n\r\n";
   
     auto req = Request::Parse(request);
     Request transformedReq;
