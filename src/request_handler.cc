@@ -110,6 +110,11 @@ void Request::update_uri(std::string newUri){
   update_raw_request();
 }
 
+void Request::setVersion(const std::string& version){
+  version_ = version;
+  update_raw_request();
+}
+
 void Request::update_raw_request(){
   std::string new_raw;
   new_raw = method_ + " " + uri_ + " " + version() + "\r\n";

@@ -26,6 +26,7 @@ class Request {
     //If the header doesn't exist, it is added to the request
     void update_header(std::pair<std::string, std::string> header);
     void update_uri(std::string newUri);
+    void setVersion(const std::string& version);
 
     using Headers = std::vector<std::pair<std::string, std::string>>;
     Headers headers() const;

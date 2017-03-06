@@ -102,6 +102,9 @@ Request ReverseProxyHandler::TransformRequest(const Request& incoming_request) {
   std::pair<std::string, std::string> newConnection("Connection", "close");
   transformedRequest->update_header(newConnection);
 
+  //Set version to HTTP1.0
+  transformedRequest->setVersion("HTTP/1.0");
+
   //This jumble of code is ensuring that the updated uri
   //is formed as a concatenation of the path in the config
   //and of the url path provided
