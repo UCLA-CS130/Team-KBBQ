@@ -16,7 +16,7 @@ path /reverse ReverseProxyHandler{
 }
 
 path / ReverseProxyHandler{
-  host www.ucla.edu;
+  host ucla.edu;
 }
 
 
