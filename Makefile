@@ -21,6 +21,21 @@ all: Webserver Webserver_test config_parser_test \
 	 server_status_tracker_test \
 	 request_handler_test echo_handler_test static_file_handler_test not_found_handler_test reverse_proxy_handler_test
 
+build: Dockerfile
+	docker build -t Webserver.build .
+	docker run --rm Webserver.build > Webserver.tar
+
+deploy: build Dockerfile.run
+	rm -rf deploy
+	mkdir deploy
+	tar -xf Webserver.tar -C deploy
+	cp Dockerfile.run deploy
+	cp config deploy
+	cp -r static_files deploy
+	cd deploy
+	docker build -f Dockerfile.run -t Webserver.deploy .
+	docker run --rm -t -p 8080:8080 Webserver.deploy
+
 Webserver: $(SERVER_CLASSES)
 	$(CXX) -o $@ $^ $(CXXFLAGS) -lboost_system
 
