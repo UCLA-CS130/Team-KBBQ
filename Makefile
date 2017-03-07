@@ -19,7 +19,7 @@ GMOCK_CLASSES=libgmock.a
 
 all: Webserver Webserver_test config_parser_test \
 	 server_status_tracker_test \
-	 request_handler_test echo_handler_test static_file_handler_test not_found_handler_test
+	 request_handler_test echo_handler_test static_file_handler_test not_found_handler_test reverse_proxy_handler_test
 
 Webserver: $(SERVER_CLASSES)
 	$(CXX) -o $@ $^ $(CXXFLAGS) -lboost_system
@@ -48,6 +48,9 @@ status_handler_test: $(SRC_DIR)/request_handler.cc $(SRC_DIR)/status_handler.cc 
 server_status_tracker_test: $(SRC_DIR)/request_handler.cc $(SRC_DIR)/server_status_tracker.cc $(GTEST_CLASSES)
 	$(CXX) -o $@ $^ $(TEST_DIR)/$@.cc -I$(SRC_DIR) $(GTEST_FLAGS) $(COVFLAGS)
 
+reverse_proxy_handler_test: $(SRC_DIR)/request_handler.cc $(SRC_DIR)/reverse_proxy_handler.cc $(GMOCK_CLASSES)
+	$(CXX) -o $@ $^ $(TEST_DIR)/$@.cc -I$(SRC_DIR) $(GTEST_FLAGS) $(COVFLAGS) -lboost_system
+
 gtest-all.o: $(GTEST_DIR)/src/gtest-all.cc
 	$(CXX) $(GTEST_FLAGS) $(GTEST_INCL) -c $(GTEST_DIR)/src/gtest-all.cc
 
@@ -68,7 +71,7 @@ libgmock.a : gmock-all.o gtest-all.o gmock_main.o
 
 coverage: COVFLAGS += -fprofile-arcs -ftest-coverage
 coverage: Webserver_test status_handler_test server_status_tracker_test \
-		  echo_handler_test static_file_handler_test not_found_handler_test request_handler_test config_parser_test
+		  echo_handler_test static_file_handler_test not_found_handler_test request_handler_test config_parser_test reverse_proxy_handler_test
 	./Webserver_test && gcov -s src -r Webserver.cc;
 	./config_parser_test && gcov -s src -r config_parser.cc;
 	./request_handler_test && gcov -s src -r request_handler.cc;
@@ -76,9 +79,11 @@ coverage: Webserver_test status_handler_test server_status_tracker_test \
 	./static_file_handler_test && gcov -s src -r static_file_handler.cc;
 	./not_found_handler_test && gcov -s src -r not_found_handler.cc;
 	./server_status_tracker_test && gcov -s src -r server_status_tracker.cc;
+	./reverse_proxy_handler_test && gcov -s src -r reverse_proxy_handler.cc;
 
 test:
-	python3 $(TEST_DIR)/integration_test.py
+	python3 $(TEST_DIR)/integration_test.py;
+	python3 $(TEST_DIR)/integration_test_proxy.py;
 
 clean:
 	rm -rf *.o *.a *~ *.gch *.swp *.dSYM *.gcno *.gcda *.gcov Webserver config_parser *_test *.tar.gz
