@@ -1,5 +1,6 @@
 CXX=g++
 CXXOPTIMIZE= -O2
+LDFLAGS= -static-libgcc -static-libstdc++ -Wl,-Bstatic
 CXXFLAGS= -g -Wall -pthread -std=c++11 $(CXXOPTIMIZE)
 COVFLAGS=
 SERVER_CLASSES= $(wildcard src/*.cc)
@@ -21,8 +22,25 @@ all: Webserver Webserver_test config_parser_test \
 	 server_status_tracker_test \
 	 request_handler_test echo_handler_test static_file_handler_test not_found_handler_test reverse_proxy_handler_test
 
+build: Dockerfile
+	sudo docker build -t webserver.build .
+	sudo docker run --rm webserver.build > Webserver.tar
+
+deploy: Webserver.tar build Dockerfile.run
+	rm -rf deploy
+	mkdir deploy
+	tar -xf Webserver.tar -C deploy
+	cp Dockerfile.run deploy
+	cp config deploy
+	cp -r static_files deploy
+	cd deploy; \
+	sudo docker build -f Dockerfile.run -t webserver.deploy .
+	sudo docker save webserver.deploy | bzip2 | ssh -i "team-kbbq.pem" ec2-user@ec2-54-202-60-252.us-west-2.compute.amazonaws.com 'bunzip2 | docker load'
+	ssh -i "team-kbbq.pem" ec2-user@ec2-54-202-60-252.us-west-2.compute.amazonaws.com -t 'docker stop $$(docker ps -a -q); docker run -d -t -p 80:2020 webserver.deploy; exit'
+
+
 Webserver: $(SERVER_CLASSES)
-	$(CXX) -o $@ $^ $(CXXFLAGS) -lboost_system
+	$(CXX) -o $@ $^ $(LDFLAGS) $(CXXFLAGS) -lboost_system
 
 Webserver_test: $(filter-out $(SRC_DIR)/Webserver_main.cc, $(SERVER_CLASSES)) $(GTEST_CLASSES)
 	$(CXX) -o $@ $^ $(TEST_DIR)/$@.cc -I$(SRC_DIR) $(GTEST_FLAGS) $(COVFLAGS) -lboost_system
