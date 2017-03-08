@@ -1,0 +1,24 @@
+# This is a comment.
+
+port 2020;  # This is also a comment.
+
+path /static StaticFileHandler {
+  root static_files;
+}
+
+path /echo EchoHandler {}
+
+path /status StatusHandler {}
+
+path /reverse ReverseProxyHandler{
+  host ucla.edu;
+  port 80;
+}
+
+path / ReverseProxyHandler{
+  host ucla.edu;
+}
+
+
+# Default response handler if no handlers match.
+default NotFoundHandler {}
