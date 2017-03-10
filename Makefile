@@ -1,6 +1,7 @@
 CXX=g++
 CXXOPTIMIZE= -O2
-LDFLAGS= -static-libgcc -static-libstdc++ -Wl,-Bstatic
+MYSQL_LD= -lmysqlcppconn-static -lmysqlclient -ldl -lz -lc
+LDFLAGS= $(MYSQL_LD) -static-libgcc -static-libstdc++ -Wl,-Bstatic
 CXXFLAGS= -g -Wall -pthread -std=c++11 $(CXXOPTIMIZE)
 COVFLAGS=
 SERVER_CLASSES= $(wildcard src/*.cc)
@@ -40,7 +41,7 @@ deploy: Webserver.tar build Dockerfile.run
 
 
 Webserver: $(SERVER_CLASSES)
-	$(CXX) -o $@ $^ $(LDFLAGS) $(CXXFLAGS) -lboost_system
+	$(CXX) -o $@ $^ $(LDFLAGS) $(CXXFLAGS) -lboost_system 
 
 Webserver_test: $(filter-out $(SRC_DIR)/Webserver_main.cc, $(SERVER_CLASSES)) $(GTEST_CLASSES)
 	$(CXX) -o $@ $^ $(TEST_DIR)/$@.cc -I$(SRC_DIR) $(GTEST_FLAGS) $(COVFLAGS) -lboost_system

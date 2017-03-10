@@ -19,6 +19,10 @@ path / ReverseProxyHandler{
   host ucla.edu;
 }
 
+path /database DatabaseHandler {
+    username root;
+    password password;
+}
 
 # Default response handler if no handlers match.
 default NotFoundHandler {}
