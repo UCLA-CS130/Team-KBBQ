@@ -3,7 +3,6 @@
 
 #include "request_handler.h"
 
-
 // FILE TYPES
 const std::string TYPE_JPEG  = "image/jpeg";
 const std::string TYPE_GIF   = "image/gif";
