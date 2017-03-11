@@ -1,21 +1,30 @@
-# This is Team-KBBQ's markdown test
+# Hello we are Team-KBBQ
+## We really like KBBQ
+* We
+* really
+* like
+* meat
 
-* this
-* is 
-* a
-* list
+> Yikes its a blockquote
 
-> Yikes
+`This is an inline code block`
 
-`This should be inline code block`
+### Here are some links to some KBBQ restuarants
 
-[google](http://www.google.com)
 
-![hi](https://a1.memecaptain.com/src_thumbs/64801.gif)
+[O Dae San](https://odaesanla.com/)
+
+[Bulgogi Hut](http://bulgogihut.com/)
+
+[Bud Namu](http://www.budnamubbqla.com/)
+
+
+### Here is a pusheen pikachu
+
+![pikachu](https://a1.memecaptain.com/src_thumbs/64801.gif)
 
 *Bolded*
 **Italics**
-_underlines_
 
 ***
 
@@ -23,8 +32,3 @@ _underlines_
   * sub-list
 2. List
 3. Works
-
----
-THIS is more text
-
-___
