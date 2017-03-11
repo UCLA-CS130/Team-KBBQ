@@ -6,6 +6,13 @@ path /static StaticFileHandler {
   root static_files;
 }
 
+path /private StaticFileHandler {
+  root private_files;
+  username user;
+  password pass;
+  timeout 100;
+}
+
 path /echo EchoHandler {}
 
 path /status StatusHandler {}
@@ -18,7 +25,6 @@ path /reverse ReverseProxyHandler{
 path / ReverseProxyHandler{
   host ucla.edu;
 }
-
 
 # Default response handler if no handlers match.
 default NotFoundHandler {}

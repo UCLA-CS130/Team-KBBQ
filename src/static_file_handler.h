@@ -2,6 +2,7 @@
 #define STATIC_FILE_HANDLER_H
 
 #include "request_handler.h"
+#include <time.h>
 
 // FILE TYPES
 const std::string TYPE_JPEG  = "image/jpeg";
@@ -11,6 +12,11 @@ const std::string TYPE_OCT   = "application/octet-stream";
 const std::string TYPE_PDF   = "application/pdf";
 const std::string TYPE_PNG   = "image/png";
 const std::string TYPE_TXT   = "text/plain";
+
+struct Cookie {
+	unsigned long key;
+	time_t time;
+};
 
 class StaticFileHandler : public RequestHandler {
  public:
@@ -24,6 +30,12 @@ class StaticFileHandler : public RequestHandler {
  private:
     std::string prefix;
     std::string root;
+    std::string username;
+    std::string password;
+    time_t timeout;
+    std::string original_request;
+    std::string original_uri;
+    Cookie cookie;
 };
 
 REGISTER_REQUEST_HANDLER(StaticFileHandler);

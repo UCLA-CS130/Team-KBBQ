@@ -155,8 +155,8 @@ void Webserver::session(tcp::socket sock) {
             size_t request_length = sock.read_some(boost::asio::buffer(request), error);
 
             const std::unique_ptr<Request> req = Request::Parse(std::string(request, request_length));
-            
-  	    RequestHandler* handler = get_handler(req->uri());
+
+            RequestHandler* handler = get_handler(req->uri());
             Response resp;
 
             if (handler->HandleRequest(*req, &resp) == RequestHandler::Status::FILE_NOT_FOUND) {
@@ -166,7 +166,6 @@ void Webserver::session(tcp::socket sock) {
             }
 
             ServerStatusTracker::GetInstance().RecordRequest(req->uri(), resp.status_code());
-
             boost::asio::write(sock, boost::asio::buffer(resp.ToString()));
             return;
         }
