@@ -21,6 +21,7 @@ class Request {
     std::string method() const;
     virtual std::string uri() const;
     std::string version() const;
+    std::string cookie() const;
     
     //New function to update header for reverse_proxy
     //If the header doesn't exist, it is added to the request
@@ -40,6 +41,7 @@ class Request {
     std::string method_;
     std::string uri_;
     std::string version_;
+    std::string cookie_;
     std::vector<std::pair<std::string, std::string>> headers_;
     std::string body_;
 };

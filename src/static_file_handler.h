@@ -13,11 +13,6 @@ const std::string TYPE_PDF   = "application/pdf";
 const std::string TYPE_PNG   = "image/png";
 const std::string TYPE_TXT   = "text/plain";
 
-struct Cookie {
-	unsigned long key;
-	time_t time;
-};
-
 class StaticFileHandler : public RequestHandler {
  public:
     virtual RequestHandler::Status Init(const std::string& uri_prefix, const NginxConfig& config);
@@ -33,8 +28,7 @@ class StaticFileHandler : public RequestHandler {
     std::string username;
     std::string password;
     time_t timeout;
-    Cookie cookie;
-    Request original_request;
+    std::string original_request;
 };
 
 REGISTER_REQUEST_HANDLER(StaticFileHandler);

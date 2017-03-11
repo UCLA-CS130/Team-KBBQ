@@ -166,6 +166,7 @@ void Webserver::session(tcp::socket sock) {
             }
 
             ServerStatusTracker::GetInstance().RecordRequest(req->uri(), resp.status_code());
+
             boost::asio::write(sock, boost::asio::buffer(resp.ToString()));
             return;
         }
@@ -196,17 +197,12 @@ std::string Webserver::find_prefix(std::string uri) {
         std::string map = it.first;
 
         if (prefix.find(map) == 0 && (prefix.find("/", map.length()) == map.length() || 
-            map.length() == prefix.length())) {
+            map.length() == prefix.length() || map.length() == 1)) {
             if (map.length() > longest.length()) {
                 longest = map;
             }
         }
     }
-
-    //Needed for requests lke /js/plugins/example.js i
-    //This is hacky but works
-    if (longest == "")
-      longest="/";
 
     return longest;
 }

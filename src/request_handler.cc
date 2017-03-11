@@ -15,6 +15,7 @@ std::unique_ptr<Request> Request::Parse(const std::string& raw_request){
     request->method_ = "";
     request->uri_ = "";
     request->version_ = "";
+    request->cookie_ = "";
     request->raw_request_ = raw_request;
 
     std::istringstream request_stream(raw_request);
@@ -50,6 +51,22 @@ std::unique_ptr<Request> Request::Parse(const std::string& raw_request){
                 //delete carriage return
                 header_value = header_value.substr(0, header_value.length()-1);
             }
+
+            //find the cookie for /private files
+            if (header_field == "Cookie") {
+                std::size_t first = header_value.find("private=");
+
+                if (first != std::string::npos) {
+                    first = first + 8;
+                    std::size_t second = header_value.find(";", first);
+
+                    if (second != std::string::npos) {
+                        request->cookie_ = header_value.substr(first, second - first);
+                    } else {
+                        request->cookie_ = header_value.substr(first);
+                    }
+                }
+            }
             
             //std::cout << "Header field: " << header_field << ", Header value: " << header_value << std::endl;
             request->headers_.push_back( std::make_pair( header_field, header_value));
@@ -79,6 +96,10 @@ std::string Request::uri() const {
 
 std::string Request::version() const {
     return version_;
+}
+
+std::string Request::cookie() const {
+    return cookie_;
 }
 
 Request::Headers Request::headers() const {

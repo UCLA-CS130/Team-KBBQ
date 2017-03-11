@@ -45,7 +45,6 @@ RequestHandler::Status StaticFileHandler::Init(const std::string& uri_prefix, co
     username = "";
     password = "";
     timeout = -1;
-    cookie = {0, -1};
 
     // Iterate through the config block to find the root mapping.
     for (size_t i = 0; i < config.statements_.size(); i++) {
@@ -73,7 +72,7 @@ RequestHandler::Status StaticFileHandler::Init(const std::string& uri_prefix, co
             // Set the password value.
             password = stmt->tokens_[1];
         } else if (stmt->tokens_[0] == "timeout") {
-            // Set the time value.
+            // Set the timeout value.
             bool is_number = (stmt->tokens_[1].find_first_not_of("1234567890") == std::string::npos);
             if (is_number) {
                 timeout = std::stoi(stmt->tokens_[1]);
@@ -113,18 +112,27 @@ RequestHandler::Status StaticFileHandler::HandleRequest(const Request& request, 
 
     // If serving regular static files or the request is about login.html, skip
     if (!username.empty() && !redirect) {
-        time_t seconds;
-        seconds = time(NULL);
-        // MAYBE ADD MORE CHECKING FOR COOKIE OR SOME SHIT
-        if (cookie.key == 0 || ((seconds - cookie.time) > timeout)) {
-            // If no cookie or expired, redirect to login
+        time_t cookie = 0;
+
+        // Convert cookie from string to time_t
+        if (request.cookie() != "") {
+            unsigned long ul = std::stoul(request.cookie());
+            cookie = (time_t) ul;
+        }
+
+        time_t now;
+        now = time(NULL);
+
+        if (now - cookie > timeout) {
+            // If no cookie or expired, redirect to login and delete old cookie
             response->SetStatus(Response::ResponseCode::FOUND);
             response->AddHeader("Location", "/private/login.html");
+            response->AddHeader("Set-Cookie", "private=" + request.cookie() + "; expires=Thu, Jan 01 1970 00:00:00 UTC;");
             response->AddHeader("Content-Type", "text/html");
             response->AddHeader("Content-Length", "228");
             get_file("private_files/login.html", &contents);
             response->SetBody(contents);
-            original_request = request;
+            original_request = request.uri();
             return RequestHandler::Status::OK;
         }
     }
@@ -139,16 +147,17 @@ RequestHandler::Status StaticFileHandler::HandleRequest(const Request& request, 
         std::string pass = body.substr(third + 1);
 
         if (user == username && pass == password) {
-            // Create cookie 
-            unsigned long random = rand() % 100000000 + 100000000;
-            cookie.key = random;
-            time_t seconds;
-            seconds = time(NULL);
-            cookie.time = seconds;
+            // Create cookie by converting the current time to a string
+            time_t now;
+            now = time(NULL);
 
-            // Redirect to the original url
-            response->AddHeader("Location", original_request.uri());
-            return HandleRequest(original_request, response);
+            std::stringstream ss;
+            ss << now;
+            std::string string_cookie = ss.str();
+
+            // Redirect to the original url and set the cookie
+            response->AddHeader("Location", original_request);
+            response->AddHeader("Set-Cookie", "private=" + string_cookie);
         }
     }
 
