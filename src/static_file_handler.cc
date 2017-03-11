@@ -3,6 +3,8 @@
 #include <fstream>
 #include <sstream>
 #include <time.h>
+#include <random>
+#include <unordered_map>
 
 // Get the content type from the file name.
 std::string StaticFileHandler::get_content_type(const std::string& filename_str) {
@@ -106,25 +108,34 @@ RequestHandler::Status StaticFileHandler::HandleRequest(const Request& request, 
     std::string login = "/private/login.html";
     bool redirect = false;
 
+    std::cout << request.raw_request() << std::endl;
+
     if (request.raw_request().find(login) != std::string::npos) {
         redirect = true;
     }
 
     // If serving regular static files or the request is about login.html, skip
     if (!username.empty() && !redirect) {
-        time_t cookie = 0;
+        time_t cookie_time = 0;
+        std::unordered_map<std::string, time_t>::const_iterator found;
 
-        // Convert cookie from string to time_t
+        // Find cookie in the cookie map
         if (request.cookie() != "") {
-            unsigned long ul = std::stoul(request.cookie());
-            cookie = (time_t) ul;
+            found = cookie_map.find(request.cookie());
+            if (found != cookie_map.end()) {
+                cookie_time = found->second;
+            }
         }
 
-        time_t now;
-        now = time(NULL);
+        time_t now_seconds;
+        now_seconds = time(NULL);
 
-        if (now - cookie > timeout) {
+        if (now_seconds - cookie_time > timeout) {
             // If no cookie or expired, redirect to login and delete old cookie
+            if (found != cookie_map.end()) {
+                cookie_map.erase(found);
+            }
+
             response->SetStatus(Response::ResponseCode::FOUND);
             response->AddHeader("Location", "/private/login.html");
             response->AddHeader("Set-Cookie", "private=" + request.cookie() + "; expires=Thu, Jan 01 1970 00:00:00 UTC;");
@@ -137,7 +148,7 @@ RequestHandler::Status StaticFileHandler::HandleRequest(const Request& request, 
         }
     }
 
-    if (request.method() == "POST") {
+    if (request.method() == "POST" && redirect) {
         // Extract username and password
         std::string body = request.body();
         size_t first = body.find("=");
@@ -148,16 +159,23 @@ RequestHandler::Status StaticFileHandler::HandleRequest(const Request& request, 
 
         if (user == username && pass == password) {
             // Create cookie by converting the current time to a string
-            time_t now;
-            now = time(NULL);
+            time_t now_seconds;
+            now_seconds = time(NULL);
 
-            std::stringstream ss;
-            ss << now;
-            std::string string_cookie = ss.str();
+            std::string cook = gen_cookie(20);
+
+            std::unordered_map<std::string, time_t>::const_iterator found = cookie_map.find(cook);
+            // Add cookie to map, if it already exists, generate new cookie and add
+            if (found == cookie_map.end()) {
+                cookie_map[cook] = now_seconds;
+            } else {
+                cook = gen_cookie(20);
+                cookie_map[cook] = now_seconds;
+            }
 
             // Redirect to the original url and set the cookie
             response->AddHeader("Location", original_request);
-            response->AddHeader("Set-Cookie", "private=" + string_cookie);
+            response->AddHeader("Set-Cookie", "private=" + cook);
         }
     }
 
@@ -225,4 +243,24 @@ Response::ResponseCode StaticFileHandler::get_file(const std::string& file_path,
     contents->assign(sstr.str());
 
     return Response::ResponseCode::OK;
+}
+
+// Taken from: http://stackoverflow.com/a/24586587
+std::string StaticFileHandler::gen_cookie(std::string::size_type length)
+{
+    static auto& chrs = "0123456789"
+        "abcdefghijklmnopqrstuvwxyz"
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+    thread_local static std::mt19937 rg{std::random_device{}()};
+    thread_local static std::uniform_int_distribution<std::string::size_type> pick(0, sizeof(chrs) - 2);
+
+    std::string s;
+
+    s.reserve(length);
+
+    while(length--)
+        s += chrs[pick(rg)];
+
+    return s;
 }

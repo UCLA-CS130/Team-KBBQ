@@ -3,6 +3,7 @@
 
 #include "request_handler.h"
 #include <time.h>
+#include <unordered_map>
 
 // FILE TYPES
 const std::string TYPE_JPEG  = "image/jpeg";
@@ -21,6 +22,7 @@ class StaticFileHandler : public RequestHandler {
 
     std::string get_content_type(const std::string &filename);
     Response::ResponseCode get_file(const std::string& file_path, std::string* contents);
+    std::string gen_cookie(std::string::size_type length);
 
  private:
     std::string prefix;
@@ -29,6 +31,7 @@ class StaticFileHandler : public RequestHandler {
     std::string password;
     time_t timeout;
     std::string original_request;
+    std::unordered_map<std::string, time_t> cookie_map;
 };
 
 REGISTER_REQUEST_HANDLER(StaticFileHandler);
