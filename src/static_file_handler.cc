@@ -45,8 +45,6 @@ RequestHandler::Status StaticFileHandler::Init(const std::string& uri_prefix, co
     username = "";
     password = "";
     timeout = -1;
-    original_request = "";
-    original_uri = "";
     cookie = {0, -1};
 
     // Iterate through the config block to find the root mapping.
@@ -126,8 +124,7 @@ RequestHandler::Status StaticFileHandler::HandleRequest(const Request& request, 
             response->AddHeader("Content-Length", "228");
             get_file("private_files/login.html", &contents);
             response->SetBody(contents);
-            original_request = request.raw_request();
-            original_uri = request.uri();
+            original_request = request;
             return RequestHandler::Status::OK;
         }
     }
@@ -150,11 +147,8 @@ RequestHandler::Status StaticFileHandler::HandleRequest(const Request& request, 
             cookie.time = seconds;
 
             // Redirect to the original url
-            response->AddHeader("Location", original_uri);
-            std::unique_ptr<Request> new_request = Request::Parse(original_request);
-            original_request = "";
-            original_uri = "";
-            return HandleRequest(*new_request, response);
+            response->AddHeader("Location", original_request.uri());
+            return HandleRequest(original_request, response);
         }
     }
 
