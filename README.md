@@ -140,3 +140,12 @@ make Webserver
 make test //runs integration test
 make coverage //runs all unit tests
 ```
+
+### Database Handler Dependencies
+The database handler requires a MySQL server installed and  mysqlclient and
+mysqlcppconn libraries. These can be installed with
+```
+sudo apt-get install mysql-server mysql-client libmysqlclient-dev libmysqlcppconn-dev
+```
+The directory containing mysqld needs to be added to the $PATH variable to run
+thr server.

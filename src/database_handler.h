@@ -6,19 +6,9 @@
 #include "mysql_driver.h"
 #include <cppconn/driver.h>
 
-const std::string BASE_PAGE = 
-    "<!doctype html>"
-    "<html>"
-        "<body>"
-            "<h1>Database Interface</h1>"
-            "<form>"
-                "SQL Command:<br>"
-                "<input type='text' name='sql'>"
-                "<br><br>"
-                "<input type='submit' value='Submit'>"
-            "</form>"
-        "</body"
-    "</html>";
+const std::string FAILED_CONNECTION = "Error: Could not connect to MySQL database.";
+const std::string PARAM_ERROR = "Error: Could not find query parameter.";
+const std::string INTERNAL_ERROR = "Error: Internal Server Error.";
 
 class DatabaseHandler : public RequestHandler {
  public:
@@ -26,7 +16,12 @@ class DatabaseHandler : public RequestHandler {
 
     virtual RequestHandler::Status HandleRequest(const Request& request, Response* response);
 
+    void ErrorResponse(std::string err_msg, Response* response);
+
  private:
+    unsigned char FromHex(unsigned char ch);
+    const std::string URLDecode(const std::string& str);
+
     std::string username_;
     std::string password_;
     sql::mysql::MySQL_Driver *driver_;
