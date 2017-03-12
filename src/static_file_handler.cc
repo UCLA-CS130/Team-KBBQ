@@ -69,18 +69,36 @@ RequestHandler::Status StaticFileHandler::Init(const std::string& uri_prefix, co
             }
         } else if (stmt->tokens_[0] == "username") {
             // Set the username value.
-            username = stmt->tokens_[1];
+            if (username.empty()) {
+                username = stmt->tokens_[1];
+            } else {
+                // Error: The username value has already been set.
+                std::cerr << "Error: Multiple username mappings specified for " << uri_prefix <<".\n";
+                return RequestHandler::Status::INVALID_CONFIG;
+            }
         } else if (stmt->tokens_[0] == "password") {
             // Set the password value.
-            password = stmt->tokens_[1];
+            if (password.empty()) {
+                password = stmt->tokens_[1];
+            } else {
+                // Error: The password value has already been set.
+                std::cerr << "Error: Multiple password mappings specified for " << uri_prefix <<".\n";
+                return RequestHandler::Status::INVALID_CONFIG;
+            }
         } else if (stmt->tokens_[0] == "timeout") {
             // Set the timeout value.
-            bool is_number = (stmt->tokens_[1].find_first_not_of("1234567890") == std::string::npos);
-            if (is_number) {
-                timeout = std::stoi(stmt->tokens_[1]);
+            if (timeout == -1) {
+                bool is_number = (stmt->tokens_[1].find_first_not_of("1234567890") == std::string::npos);
+                if (is_number) {
+                    timeout = std::stoi(stmt->tokens_[1]);
+                } else {
+                    // Error: The timeout is not a number.
+                    std::cerr << "Error: Timeout is not a number.\n";
+                    return RequestHandler::Status::INVALID_CONFIG;
+                }
             } else {
-                // Error: The timeout is not a number.
-                std::cerr << "Error: Timeout is not a number.\n";
+                // Error: The root value has already been set.
+                std::cerr << "Error: Multiple timeout mappings specified for " << uri_prefix <<".\n";
                 return RequestHandler::Status::INVALID_CONFIG;
             }
         }
@@ -105,10 +123,14 @@ RequestHandler::Status StaticFileHandler::Init(const std::string& uri_prefix, co
 RequestHandler::Status StaticFileHandler::HandleRequest(const Request& request, Response* response) {
     std::string file_path = "";
     std::string contents = "";
-    std::string login = "/private/login.html";
+    std::string login = prefix + "/login.html";
     bool redirect = false;
 
-    if (request.raw_request().find(login) != std::string::npos) {
+    // Get URI.
+    std::string filename = request.uri();
+
+    // Check if URI is login page
+    if (filename.find(login) == 0 && login.length() == filename.length()) {
         redirect = true;
     }
 
@@ -118,13 +140,13 @@ RequestHandler::Status StaticFileHandler::HandleRequest(const Request& request, 
 
         if (!cookie_ok) {
             // If cookie is not ok, need to redirect
-            original_request = request.uri();
+            original_uri = request.uri();
             return RequestHandler::Status::OK;
         }
     }
 
     if (request.method() == "POST" && redirect) {
-        // The body returns this: username=USERNAME&password=PASSWORD
+        // The body returns: username=USERNAME&password=PASSWORD
         // Extract username and password
         std::string body = request.body();
         size_t first = body.find("=") + 1;
@@ -139,18 +161,15 @@ RequestHandler::Status StaticFileHandler::HandleRequest(const Request& request, 
 
             // Redirect to the original url and set the cookie
             // If the original request was login.html, don't redirect
-            if (original_request !=  "") {
-                response->AddHeader("Location", original_request);
+            if (original_uri !=  "") {
+                response->AddHeader("Location", original_uri);
             }
 
             response->AddHeader("Set-Cookie", "private=" + new_cookie);
         }
 
-        original_request = "";
+        original_uri = "";
     }
-
-    // Get URI.
-    std::string filename = request.uri();
 
     // Check the URI prefix.
     if (filename.find(prefix) != 0) {
@@ -284,15 +303,15 @@ bool StaticFileHandler::check_cookie(std::string cookie, Response* response) {
         }
 
         response->SetStatus(Response::ResponseCode::FOUND);
-        response->AddHeader("Location", "/private/login.html");
+        response->AddHeader("Location", prefix + "/login.html");
         response->AddHeader("Set-Cookie", "private=" + cookie + "; expires=Thu, Jan 01 1970 00:00:00 UTC;");
         response->AddHeader("Content-Type", "text/html");
         response->AddHeader("Content-Length", "228");
         std::string contents = "";
-        get_file("private_files/login.html", &contents);
+        get_file(root + "/login.html", &contents);
         response->SetBody(contents);
         return false;
     }
-
+    
     return true;
 }

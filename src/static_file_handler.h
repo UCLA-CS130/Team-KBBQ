@@ -32,7 +32,7 @@ class StaticFileHandler : public RequestHandler {
     std::string username;
     std::string password;
     time_t timeout;
-    std::string original_request;
+    std::string original_uri;
     std::unordered_map<std::string, time_t> cookie_map;
 };
 

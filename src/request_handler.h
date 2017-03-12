@@ -18,10 +18,10 @@ class Request {
     static std::unique_ptr<Request> Parse(const std::string& raw_request);
 
     virtual std::string raw_request() const;
-    std::string method() const;
+    virtual std::string method() const;
     virtual std::string uri() const;
     std::string version() const;
-    std::string cookie() const;
+    virtual std::string cookie() const;
     
     //New function to update header for reverse_proxy
     //If the header doesn't exist, it is added to the request
@@ -32,7 +32,7 @@ class Request {
     using Headers = std::vector<std::pair<std::string, std::string>>;
     Headers headers() const;
 
-    std::string body() const;
+    virtual std::string body() const;
 
  private:
     void update_raw_request();
