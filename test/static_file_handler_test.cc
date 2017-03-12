@@ -283,7 +283,7 @@ TEST_F(StaticFileHandlerTests, InvalidCookie) {
 
 // If no cookie redirect to login.html
 TEST_F(StaticFileHandlerTests, HandleRedirect) {
-    EXPECT_CALL(processed_request, uri()).Times(2).WillRepeatedly(Return("/private/test_file.txt"));
+    EXPECT_CALL(processed_request, uri()).Times(1).WillOnce(Return("/private/test_file.txt"));
     //EXPECT_CALL(processed_request, cookie()).Times(1).WillOnce(Return(""));
 
     ASSERT_TRUE(ParseString("root ./; username root; password password; timeout 10;"));

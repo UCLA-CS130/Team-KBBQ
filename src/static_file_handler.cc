@@ -97,7 +97,7 @@ RequestHandler::Status StaticFileHandler::Init(const std::string& uri_prefix, co
                     return RequestHandler::Status::INVALID_CONFIG;
                 }
             } else {
-                // Error: The root value has already been set.
+                // Error: The timeout value has already been set.
                 std::cerr << "Error: Multiple timeout mappings specified for " << uri_prefix <<".\n";
                 return RequestHandler::Status::INVALID_CONFIG;
             }
@@ -140,7 +140,7 @@ RequestHandler::Status StaticFileHandler::HandleRequest(const Request& request, 
 
         if (!cookie_ok) {
             // If cookie is not ok, need to redirect
-            original_uri = request.uri();
+            original_uri = filename;
             return RequestHandler::Status::OK;
         }
     }
@@ -312,6 +312,6 @@ bool StaticFileHandler::check_cookie(std::string cookie, Response* response) {
         response->SetBody(contents);
         return false;
     }
-    
+
     return true;
 }
