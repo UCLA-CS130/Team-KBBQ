@@ -20,6 +20,7 @@ path / ReverseProxyHandler{
 }
 
 path /database DatabaseHandler {
+    database CS130;
     username root;
     password password;
 }

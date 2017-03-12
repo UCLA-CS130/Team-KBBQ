@@ -37,7 +37,7 @@
         <h1>Database Interface</h1>
         <form id="query-form">
             SQL Command:<br>
-            <input type='text' id='sql'>
+            <textarea id='sql' rows="5" placeholder="Only one SQL command allowed"></textarea>
             <br><br>
             <input type='submit' value='Submit'>
         </form>
@@ -47,6 +47,7 @@
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
         <script>
             $(function() {
+                var response_div = $("#response");
                 $("#query-form").submit(function(e) {
                     e.preventDefault();
                     var query = $("#sql").val();
@@ -75,7 +76,13 @@
                         });
                         response +="</table>";
 
-                        $("#response").html(response);
+                        // Flash the text when update (to show that the form went through)
+                        if (response_div.html()) {
+                            response_div.fadeOut(100).fadeIn(100);
+                        }
+
+                        // Set the response
+                        response_div.html(response);
                     })
                     .fail(function(output) {
                         // Response is not in JSON format (either error message or just MySQL log message)
@@ -83,7 +90,14 @@
                         $.each(output.responseText.split("\n").filter(Boolean), function(i, line){
                             response += "<p>" + line + "</p>";
                         });
-                        $("#response").html(response);
+
+                        // Flash the text when update (to show that the form went through)
+                        if (response_div.html()) {
+                            response_div.fadeOut(100).fadeIn(100);
+                        }
+
+                        // Set the response
+                        response_div.html(response);
                     });
                 });
             });

@@ -18,10 +18,17 @@ class DatabaseHandler : public RequestHandler {
 
     void ErrorResponse(std::string err_msg, Response* response);
 
+    const std::string ExtractQuery(const std::string& uri);
+
+    const std::string GetJSONResults(sql::Statement *stmt);
+
+    const std::string ExecuteQuery(sql::Connection *connection, const std::string& query);
+
  private:
     unsigned char FromHex(unsigned char ch);
     const std::string URLDecode(const std::string& str);
 
+    std::string database_;
     std::string username_;
     std::string password_;
     sql::mysql::MySQL_Driver *driver_;
