@@ -23,6 +23,8 @@ class StaticFileHandler : public RequestHandler {
     std::string get_content_type(const std::string &filename);
     Response::ResponseCode get_file(const std::string& file_path, std::string* contents);
     std::string gen_cookie(std::string::size_type length);
+    std::string add_cookie(std::string old_cookie);
+    bool check_cookie(std::string cookie, Response* response);
 
  private:
     std::string prefix;

@@ -54,12 +54,15 @@ std::unique_ptr<Request> Request::Parse(const std::string& raw_request){
 
             //find the cookie for /private files
             if (header_field == "Cookie") {
-                std::size_t first = header_value.find("private=");
+                std::string cookie_name =  "private=";
+                std::size_t first = header_value.find(cookie_name);
 
                 if (first != std::string::npos) {
-                    first = first + 8;
+                    first = first + cookie_name.length();
                     std::size_t second = header_value.find(";", first);
 
+                    //if there are multiple cookies already, they are separated by ;
+                    //if not, just get the cookie
                     if (second != std::string::npos) {
                         request->cookie_ = header_value.substr(first, second - first);
                     } else {

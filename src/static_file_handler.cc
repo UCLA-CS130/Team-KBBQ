@@ -108,75 +108,45 @@ RequestHandler::Status StaticFileHandler::HandleRequest(const Request& request, 
     std::string login = "/private/login.html";
     bool redirect = false;
 
-    std::cout << request.raw_request() << std::endl;
-
     if (request.raw_request().find(login) != std::string::npos) {
         redirect = true;
     }
 
     // If serving regular static files or the request is about login.html, skip
     if (!username.empty() && !redirect) {
-        time_t cookie_time = 0;
-        std::unordered_map<std::string, time_t>::const_iterator found;
+        bool cookie_ok = check_cookie(request.cookie(), response);
 
-        // Find cookie in the cookie map
-        if (request.cookie() != "") {
-            found = cookie_map.find(request.cookie());
-            if (found != cookie_map.end()) {
-                cookie_time = found->second;
-            }
-        }
-
-        time_t now_seconds;
-        now_seconds = time(NULL);
-
-        if (now_seconds - cookie_time > timeout) {
-            // If no cookie or expired, redirect to login and delete old cookie
-            if (found != cookie_map.end()) {
-                cookie_map.erase(found);
-            }
-
-            response->SetStatus(Response::ResponseCode::FOUND);
-            response->AddHeader("Location", "/private/login.html");
-            response->AddHeader("Set-Cookie", "private=" + request.cookie() + "; expires=Thu, Jan 01 1970 00:00:00 UTC;");
-            response->AddHeader("Content-Type", "text/html");
-            response->AddHeader("Content-Length", "228");
-            get_file("private_files/login.html", &contents);
-            response->SetBody(contents);
+        if (!cookie_ok) {
+            // If cookie is not ok, need to redirect
             original_request = request.uri();
             return RequestHandler::Status::OK;
         }
     }
 
     if (request.method() == "POST" && redirect) {
+        // The body returns this: username=USERNAME&password=PASSWORD
         // Extract username and password
         std::string body = request.body();
-        size_t first = body.find("=");
+        size_t first = body.find("=") + 1;
         size_t second = body.find("&");
-        std::string user = body.substr(first + 1, second - first - 1);
+        std::string user = body.substr(first, second - first);
         size_t third = body.find("=", second);
         std::string pass = body.substr(third + 1);
 
         if (user == username && pass == password) {
-            // Create cookie by converting the current time to a string
-            time_t now_seconds;
-            now_seconds = time(NULL);
-
-            std::string cook = gen_cookie(20);
-
-            std::unordered_map<std::string, time_t>::const_iterator found = cookie_map.find(cook);
-            // Add cookie to map, if it already exists, generate new cookie and add
-            if (found == cookie_map.end()) {
-                cookie_map[cook] = now_seconds;
-            } else {
-                cook = gen_cookie(20);
-                cookie_map[cook] = now_seconds;
-            }
+            // Generate and then add the cookie to cookie_map
+            std::string new_cookie = add_cookie(request.cookie());
 
             // Redirect to the original url and set the cookie
-            response->AddHeader("Location", original_request);
-            response->AddHeader("Set-Cookie", "private=" + cook);
+            // If the original request was login.html, don't redirect
+            if (original_request !=  "") {
+                response->AddHeader("Location", original_request);
+            }
+
+            response->AddHeader("Set-Cookie", "private=" + new_cookie);
         }
+
+        original_request = "";
     }
 
     // Get URI.
@@ -246,6 +216,7 @@ Response::ResponseCode StaticFileHandler::get_file(const std::string& file_path,
 }
 
 // Taken from: http://stackoverflow.com/a/24586587
+// Generate a random alphanumeric string of any length
 std::string StaticFileHandler::gen_cookie(std::string::size_type length)
 {
     static auto& chrs = "0123456789"
@@ -263,4 +234,65 @@ std::string StaticFileHandler::gen_cookie(std::string::size_type length)
         s += chrs[pick(rg)];
 
     return s;
+}
+
+std::string StaticFileHandler::add_cookie(std::string old_cookie) {
+    std::unordered_map<std::string, time_t>::const_iterator found = cookie_map.find(old_cookie);
+
+    // If the cookie already exists, but the user enters username and password again, delete the old cookie
+    if (found != cookie_map.end()) {
+        cookie_map.erase(found);
+    }
+
+    // Create a new cookie
+    std::string new_cookie = gen_cookie(20);
+    found = cookie_map.find(new_cookie);
+
+    time_t now_seconds;
+    now_seconds = time(NULL);
+
+    // Add cookie to map, if duplicate created, create again and add
+    if (found == cookie_map.end()) {
+        cookie_map[new_cookie] = now_seconds;
+    } else {
+        new_cookie = gen_cookie(20);
+        cookie_map[new_cookie] = now_seconds;
+    }
+
+    return new_cookie;
+}
+
+bool StaticFileHandler::check_cookie(std::string cookie, Response* response) {
+    time_t cookie_time = 0;
+    std::unordered_map<std::string, time_t>::const_iterator found;
+
+    // Find cookie in the cookie map and get time
+    if (cookie != "") {
+        found = cookie_map.find(cookie);
+        if (found != cookie_map.end()) {
+            cookie_time = found->second;
+        }
+    }
+
+    time_t now_seconds;
+    now_seconds = time(NULL);
+
+    if (now_seconds - cookie_time > timeout) {
+        // If no cookie or expired, redirect to login and delete old cookie
+        if (found != cookie_map.end()) {
+            cookie_map.erase(found);
+        }
+
+        response->SetStatus(Response::ResponseCode::FOUND);
+        response->AddHeader("Location", "/private/login.html");
+        response->AddHeader("Set-Cookie", "private=" + cookie + "; expires=Thu, Jan 01 1970 00:00:00 UTC;");
+        response->AddHeader("Content-Type", "text/html");
+        response->AddHeader("Content-Length", "228");
+        std::string contents = "";
+        get_file("private_files/login.html", &contents);
+        response->SetBody(contents);
+        return false;
+    }
+
+    return true;
 }
