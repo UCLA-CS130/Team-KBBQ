@@ -29,7 +29,7 @@ Link: <http://ec2-54-202-60-252.us-west-2.compute.amazonaws.com/private/login.ht
 
 Login page to access private files
 
-Link 2: <http://ec2-54-202-60-252.us-west-2.compute.amazonaws.com/private/pikachu.html>
+Link 2: <http://ec2-54-202-60-252.us-west-2.compute.amazonaws.com/private/pikachu.jpg>
 
 Direct link to private file, which will redirect to login
 
