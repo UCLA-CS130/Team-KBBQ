@@ -1,4 +1,5 @@
 #include "static_file_handler.h"
+#include "../cpp-markdown/markdown.h"
 #include <algorithm>
 #include <fstream>
 #include <sstream>
@@ -33,6 +34,8 @@ std::string StaticFileHandler::get_content_type(const std::string& filename_str)
         return TYPE_PNG;
     } else if (type == "txt") {
         return TYPE_TXT;
+    } else if (type == "md") {
+        return TYPE_MD;
     } else { // Default to type octet-stream.
         return TYPE_OCT;
     }
@@ -109,12 +112,43 @@ RequestHandler::Status StaticFileHandler::HandleRequest(const Request& request, 
     }
 
     // Create response headers
+    std::string content_type = get_content_type(filename);
     response->SetStatus(response_code);
-    response->AddHeader("Content-Type", get_content_type(filename));
-    response->AddHeader("Content-Length", std::to_string(contents.length()));
-
+    //check for markdown type before setting to html
+    if (content_type == "text/markdown") {
+        response->AddHeader("Content-Type", "text/html");
+    } else {
+        response->AddHeader("Content-Type", content_type);
+        response->AddHeader("Content-Length", std::to_string(contents.length()));
+    }
     // Set response body
-    response->SetBody(contents);
+    if (content_type == "text/markdown") {
+        markdown::Document doc;
+        doc.read(contents);
+        std::ostringstream stream;
+        doc.write(stream);
+        std::string markdown = stream.str();
+        //add github styling to markdown
+        markdown.insert(0,
+            "<link rel=\"stylesheet\" href=\"markdown.css\">"
+            "<style>"
+                ".markdown-body {"
+                   "box-sizing: border-box;"
+                    "min-width: 200px;"
+                    "max-width: 980px;"
+                    "margin: 0 auto;"
+                    "padding: 45px;"
+                "}"
+            "</style>"
+            "<body class=\"markdown-body\">");
+        markdown.append("</body>");
+        //add content length after html is generated
+        response->AddHeader("Content-Length", std::to_string(markdown.length()));
+        response->SetBody(markdown);
+
+    } else {
+        response->SetBody(contents);
+    }
 
     return RequestHandler::Status::OK;
 }
