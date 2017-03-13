@@ -1,7 +1,7 @@
 CXX=g++
 CXXOPTIMIZE= -O2
 MYSQL_LD= -lmysqlcppconn-static -lmysqlclient -ldl -lz -lc
-LDFLAGS= $(MYSQL_LD) -static-libgcc -static-libstdc++ -Wl,-Bstatic
+LDFLAGS= $(MYSQL_LD) -static-libgcc -static-libstdc++ -Wl,-Bstatic -lboost_regex
 CXXFLAGS= -g -Wall -pthread -std=c++11 $(CXXOPTIMIZE)
 COVFLAGS=
 SERVER_CLASSES= $(wildcard src/*.cc)
