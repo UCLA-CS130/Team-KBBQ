@@ -4,7 +4,9 @@ RUN apt-get update && apt-get install --auto-remove -y make g++ libboost-all-dev
 
 WORKDIR /opt/webserver
 
-COPY . /opt/webserver
+COPY . /opt/webserver 
+
+RUN sudo apt-get install -y libmysqlclient-dev libmysqlcppconn.dev mysql-server mysql-client
 
 RUN make clean && make Webserver
 

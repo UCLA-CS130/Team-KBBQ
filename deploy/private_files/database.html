@@ -1,0 +1,106 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Database Commandline Interface</title>
+        <style type="text/css">
+            html {
+                height: 100%;
+            }
+            body {
+                height: 100%;
+                margin: 0px;
+                padding: 10px;
+            }
+            table {
+                border-collapse: collapse;
+                margin: 20px 0;
+                width: 80%;
+            }
+            th, td {
+                padding: 8px;
+                text-align: left;
+                border-bottom: 1px solid #ddd;
+                border-top: 1px solid #ddd;
+            }
+            #sql {
+                width: 50%;
+            }
+            #response-table th {
+                background-color: #eee;
+            }
+            #response-table td:nth-child(1), #response-table th:nth-child(1){
+                font-weight: bold;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Database Interface</h1>
+        <form id="query-form">
+            SQL Command:<br>
+            <textarea id='sql' rows="5" placeholder="Only one SQL command allowed"></textarea>
+            <br><br>
+            <input type='submit' value='Submit'>
+        </form>
+
+        <div id="response"></div>
+
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+        <script>
+            $(function() {
+                var response_div = $("#response");
+                $("#query-form").submit(function(e) {
+                    e.preventDefault();
+                    var query = $("#sql").val();
+                    var url = "/database/?query=" + encodeURI(query);
+
+                    $.ajax({
+                        url: url,
+                        dataType: 'json'
+                    }).done(function(result) {
+                        // Generate table with select response
+                        var response = "<table id='response-table'><tr>";
+                        response += "<th>#</th>";
+                        $.each(result.cols, function(idx, col) {
+                            // Print column names
+                            response +="<th>" + col + "</th>";
+                        });
+                        response += "</tr>";
+                        $.each(result.data, function(id, row) {
+                            // Print each row
+                            response += "<tr>";
+                            response +="<td>" + id + "</td>";
+                            $.each(row, function(idx, val) {
+                                response +="<td>" + val + "</td>";
+                            });
+                            response += "</tr>";
+                        });
+                        response +="</table>";
+
+                        // Flash the text when update (to show that the form went through)
+                        if (response_div.html()) {
+                            response_div.fadeOut(100).fadeIn(100);
+                        }
+
+                        // Set the response
+                        response_div.html(response);
+                    })
+                    .fail(function(output) {
+                        // Response is not in JSON format (either error message or just MySQL log message)
+                        var response = "";
+                        $.each(output.responseText.split("\n").filter(Boolean), function(i, line){
+                            response += "<p>" + line + "</p>";
+                        });
+
+                        // Flash the text when update (to show that the form went through)
+                        if (response_div.html()) {
+                            response_div.fadeOut(100).fadeIn(100);
+                        }
+
+                        // Set the response
+                        response_div.html(response);
+                    });
+                });
+            });
+        </script>
+    </body>
+</html>
