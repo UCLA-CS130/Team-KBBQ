@@ -6,6 +6,10 @@ WORKDIR /opt/webserver
 
 COPY . /opt/webserver
 
+RUN sudo apt-get install -y libmysqlclient-dev libmysqlcppconn.dev
+
+RUN /usr/sbin/mysqld &
+
 RUN make clean && make Webserver
 
 CMD ["tar", "-cf", "-", "Webserver"]
