@@ -99,7 +99,8 @@ class RequestHandler {
         INVALID_CONFIG = 1,
         INVALID_URI = 2,
         FILE_NOT_FOUND = 3,
-        PROXY_ERROR = 4
+        PROXY_ERROR = 4,
+        DATABASE_ERROR = 5
     };
 
     // Initializes the handler. Returns true if successful.

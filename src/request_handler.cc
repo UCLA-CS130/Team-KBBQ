@@ -30,6 +30,7 @@ std::unique_ptr<Request> Request::Parse(const std::string& raw_request){
             request->method_ = tokens[0];
             request->uri_ = tokens[1];
             request->version_ = tokens[2].substr(0, tokens[2].length()-1);
+            std::cout << "Request for " << request->uri_;
         }
         else {
             return nullptr;
@@ -186,7 +187,10 @@ std::unique_ptr<Response> Response::Parse(const std::string& raw_response){
 
   std::size_t code_pos = first_line.find(" ", version_pos +1);
   std::string code_str = first_line.substr(version_pos + 1, code_pos - version_pos - 1);
-  int code = std::stoi(code_str);
+  int code = 0;
+  if (code_str != "") {
+    code = std::stoi(code_str);
+  }
   
   ResponseCode rc;
   if (!res->convertCode(code, rc)){
