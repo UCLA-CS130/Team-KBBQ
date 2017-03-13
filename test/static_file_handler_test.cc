@@ -25,6 +25,23 @@ protected:
         std::stringstream config_stream(config_string);
         return parser_.Parse(&config_stream, &out_config_);
     }
+
+    void CreateLoginFile() {
+        std::ofstream login_file("login.html");
+        std::string log = "<form action=\"\" method=\"post\">"
+        "Username: <input type=\"text\" name=\"username\"><br>"
+        "Password: <input type=\"text\" name=\"password\"/>"
+        "<input type=\"submit\" value=\"Submit\"/></form>";
+        login_file << log << std::endl;
+        login_file.close();
+    }
+
+    bool CreateTestFile() {
+        std::ofstream test_file("test_file.txt");
+        test_file << "foo bar" << std::endl;
+        test_file.close();
+    }
+
     NginxConfigParser parser_;
     NginxConfig out_config_;
     MockRequest processed_request;
@@ -129,9 +146,7 @@ TEST_F(StaticFileHandlerTests, TrailingSlash) {
     ASSERT_TRUE(ParseString("root ./;"));
 
     // Create a test file
-    std::ofstream test_file("test_file.txt");
-    test_file << "foo bar" << std::endl;
-    test_file.close();
+    CreateTestFile();
 
     // Initialize handler for uri prefix "/static"
     StaticFileHandler f_handler;
@@ -162,9 +177,7 @@ TEST_F(StaticFileHandlerTests, HandleBasicRequest) {
     ASSERT_TRUE(ParseString("root ./;"));
 
     // Create a test file
-    std::ofstream test_file("test_file.txt");
-    test_file << "foo bar" << std::endl;
-    test_file.close();
+    CreateTestFile();
 
     // Initialize handler for uri prefix "/static"
     StaticFileHandler f_handler;
@@ -284,19 +297,11 @@ TEST_F(StaticFileHandlerTests, InvalidCookie) {
 // If no cookie redirect to login.html
 TEST_F(StaticFileHandlerTests, HandleRedirect) {
     EXPECT_CALL(processed_request, uri()).Times(1).WillOnce(Return("/private/test_file.txt"));
-    //EXPECT_CALL(processed_request, cookie()).Times(1).WillOnce(Return(""));
 
     ASSERT_TRUE(ParseString("root ./; user root password; timeout 10;"));
 
     // Create a login file
-    std::ofstream login_file("login.html");
-    std::string log = "<form action=\"\" method=\"post\">"
-    "Username: <input type=\"text\" name=\"username\"><br>"
-    "Password: <input type=\"text\" name=\"password\"/>"
-    "<input type=\"submit\" value=\"Submit\"/></form>";
-
-    login_file << log;
-    login_file.close();
+    CreateLoginFile();
 
     // Initialize handler for uri prefix "/private"
     StaticFileHandler f_handler;
@@ -306,10 +311,7 @@ TEST_F(StaticFileHandlerTests, HandleRedirect) {
     // Handle the mock request
     ASSERT_EQ(RequestHandler::Status::OK, f_handler.HandleRequest(processed_request, &resp));
 
-    std::string resp_header = "HTTP/1.0 302 Found\r\nLocation: /private/login.html\r\n"
-    "Set-Cookie: private=; expires=Thu, Jan 01 1970 00:00:00 UTC;\r\n"
-    "Content-Type: text/html\r\nContent-Length: 228\r\n\r\n" + log;
-    EXPECT_EQ(resp_header, resp.ToString());
+    EXPECT_EQ(Response::ResponseCode::FOUND, resp.status_code());
     remove("login.html");
 }
 
@@ -324,19 +326,10 @@ TEST_F(StaticFileHandlerTests, HandleLogin) {
     ASSERT_TRUE(ParseString("root ./; user root password; timeout 1000;"));
 
     // Create a login file
-    std::ofstream login_file("login.html");
-    std::string log = "<form action=\"\" method=\"post\">"
-    "Username: <input type=\"text\" name=\"username\"><br>"
-    "Password: <input type=\"text\" name=\"password\"/>"
-    "<input type=\"submit\" value=\"Submit\"/></form>";
-
-    login_file << log << std::endl;
-    login_file.close();
+    CreateLoginFile();
 
     // Create a test file
-    std::ofstream test_file("test_file.txt");
-    test_file << "foo bar" << std::endl;
-    test_file.close();
+    CreateTestFile();
 
     // Initialize handler for uri prefix "/private"
     StaticFileHandler f_handler;
@@ -378,19 +371,7 @@ TEST_F(StaticFileHandlerTests, HandleBadPassword) {
     ASSERT_TRUE(ParseString("root ./; user root password; timeout 1000;"));
 
     // Create a login file
-    std::ofstream login_file("login.html");
-    std::string log = "<form action=\"\" method=\"post\">"
-    "Username: <input type=\"text\" name=\"username\"><br>"
-    "Password: <input type=\"text\" name=\"password\"/>"
-    "<input type=\"submit\" value=\"Submit\"/></form>";
-
-    login_file << log << std::endl;
-    login_file.close();
-
-    // Create a test file
-    std::ofstream test_file("test_file.txt");
-    test_file << "foo bar" << std::endl;
-    test_file.close();
+    CreateLoginFile();
 
     // Initialize handler for uri prefix "/private"
     StaticFileHandler f_handler;
@@ -404,5 +385,4 @@ TEST_F(StaticFileHandlerTests, HandleBadPassword) {
     std::string cookie_header = "Set-Cookie: private=";
     EXPECT_EQ(std::string::npos, resp.ToString().find(cookie_header));
     remove("login.html");
-    remove("test_file.txt");
 }

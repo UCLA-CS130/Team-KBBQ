@@ -33,6 +33,7 @@ deploy: Webserver.tar build Dockerfile.run
 	cp Dockerfile.run deploy
 	cp config deploy
 	cp -r static_files deploy
+	cp -r private_files deploy
 	cd deploy; \
 	sudo docker build -f Dockerfile.run -t webserver.deploy .
 	sudo docker save webserver.deploy | bzip2 | ssh -i "team-kbbq.pem" ec2-user@ec2-54-202-60-252.us-west-2.compute.amazonaws.com 'bunzip2 | docker load'
