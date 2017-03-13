@@ -10,6 +10,9 @@ SRC_DIR=src
 TEST_DIR=test
 GTEST_DIR=googletest/googletest
 GMOCK_DIR=googletest/googlemock
+MD_DIR=cpp-markdown
+MD_INCL=-I$(MD_DIR)
+MD_CLASSES=$(MD_DIR)/*.cpp
 
 GTEST_FLAGS=-std=c++11 -isystem $(GTEST_DIR)/include -isystem $(GMOCK_DIR)/include -pthread
 GTEST_INCL=-I$(GTEST_DIR)
@@ -39,9 +42,8 @@ deploy: Webserver.tar build Dockerfile.run
 	sudo docker save webserver.deploy | bzip2 | ssh -i "team-kbbq.pem" ec2-user@ec2-54-202-60-252.us-west-2.compute.amazonaws.com 'bunzip2 | docker load'
 	ssh -i "team-kbbq.pem" ec2-user@ec2-54-202-60-252.us-west-2.compute.amazonaws.com -t 'docker stop $$(docker ps -a -q); docker run -d -t -p 80:2020 webserver.deploy; exit'
 
-
-Webserver: $(SERVER_CLASSES)
-	$(CXX) -o $@ $^ $(LDFLAGS) $(CXXFLAGS) -lboost_system 
+Webserver: $(SERVER_CLASSES) $(MD_CLASSES)
+	$(CXX) -o $@ $^ $(LDFLAGS) $(CXXFLAGS) $(MD_INCL) -lboost_system
 
 Webserver_test: $(filter-out $(SRC_DIR)/Webserver_main.cc, $(SERVER_CLASSES)) $(GTEST_CLASSES)
 	$(CXX) -o $@ $^ $(TEST_DIR)/$@.cc -I$(SRC_DIR) $(GTEST_FLAGS) $(COVFLAGS) $(LDFLAGS) -lboost_system
