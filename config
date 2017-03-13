@@ -6,6 +6,14 @@ path /static StaticFileHandler {
   root static_files;
 }
 
+path /private StaticFileHandler {
+  root private_files;
+  user leslie lam;
+  user stella chung;
+  user thomas choi;
+  timeout 60; #This number is in seconds
+}
+
 path /echo EchoHandler {}
 
 path /status StatusHandler {}
