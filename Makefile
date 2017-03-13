@@ -44,7 +44,7 @@ deploy: Webserver.tar build Dockerfile.run
 	sudo docker build -f Dockerfile.run -t webserver.deploy .
 	sudo docker save webserver.deploy | bzip2 | ssh -i "team-kbbq.pem" ec2-user@ec2-54-202-60-252.us-west-2.compute.amazonaws.com 'bunzip2 | docker load'
 	ssh -i "team-kbbq.pem" ec2-user@ec2-54-202-60-252.us-west-2.compute.amazonaws.com -t 'docker stop $$(docker ps -a -q); docker run -d -t -p 80:2020 webserver.deploy; exit'
-
+	
 Webserver: $(SERVER_CLASSES) $(MD_CLASSES)
 	$(CXX) -o $@ $^ $(LDFLAGS) $(CXXFLAGS) $(MD_INCL) -lboost_system
 
