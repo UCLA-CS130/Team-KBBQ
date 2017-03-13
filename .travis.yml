@@ -9,3 +9,5 @@ addons:
     apt:
         packages:
             - libboost-all-dev
+            - libmysqlclient-dev
+            - libmysqlcppconn-dev
