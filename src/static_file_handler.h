@@ -13,6 +13,7 @@ const std::string TYPE_OCT   = "application/octet-stream";
 const std::string TYPE_PDF   = "application/pdf";
 const std::string TYPE_PNG   = "image/png";
 const std::string TYPE_TXT   = "text/plain";
+const std::string TYPE_MD    = "text/markdown";
 
 class StaticFileHandler : public RequestHandler {
  public:
