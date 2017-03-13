@@ -68,25 +68,25 @@ RequestHandler::Status DatabaseHandler::Init(const std::string& uri_prefix, cons
 }
 
 RequestHandler::Status DatabaseHandler::HandleRequest(const Request& request, Response* response) {
-    // Connect to MySQL
-    sql::Connection *connection = driver_->connect("localhost", username_, password_);
+    try {
+        // Connect to MySQL
+        sql::Connection *connection = driver_->connect("localhost", username_, password_);
 
-    if (!connection) {
-        // Connection Failed
-        std::cerr << FAILED_CONNECTION << std::endl << std::endl;
-        SetResponse(FAILED_CONNECTION, response);
-        return RequestHandler::Status::DATABASE_ERROR;
-    } else {
-        // Parse query from URI request
-        std::string query = ExtractQuery(request.uri());
-        if (query == "") {
-            // No query found in URI
-            std::cerr << PARAM_ERROR << std::endl << std::endl;
-            SetResponse(PARAM_ERROR, response);
+        if (!connection) {
+            // Connection Failed
+            std::cerr << FAILED_CONNECTION << std::endl << std::endl;
+            SetResponse(FAILED_CONNECTION, response);
             return RequestHandler::Status::DATABASE_ERROR;
-        }
+        } else {
+            // Parse query from URI request
+            std::string query = ExtractQuery(request.uri());
+            if (query == "") {
+                // No query found in URI
+                std::cerr << PARAM_ERROR << std::endl << std::endl;
+                SetResponse(PARAM_ERROR, response);
+                return RequestHandler::Status::DATABASE_ERROR;
+            }
 
-        try {
             // Set the database
             connection->setSchema(database_);
             std::cout << "Executing query: " << query << std::endl;
@@ -95,20 +95,19 @@ RequestHandler::Status DatabaseHandler::HandleRequest(const Request& request, Re
             std::cout << "Database results: " << std::endl << output << std::endl << std::endl;
             SetResponse(output, response);
 
-        } catch (sql::SQLException &e) {
-            std::stringstream SQL_err_output;
-            /* what() (derived from std::runtime_error) fetches error message */
-            SQL_err_output << "Error: " << e.what();
-            SQL_err_output << " (MySQL error code: " << e.getErrorCode();
-            SQL_err_output << ", SQLState: " << e.getSQLState() << " )" << std::endl;
-
-            std::cerr << SQL_err_output << std::endl << std::endl;
-            SetResponse(SQL_err_output.str(), response);
-            return RequestHandler::Status::DATABASE_ERROR;
+            // Free connection pointer
+            delete connection;
         }
+    } catch (sql::SQLException &e) {
+        std::stringstream SQL_err_output;
+        /* what() (derived from std::runtime_error) fetches error message */
+        SQL_err_output << "Error: " << e.what();
+        SQL_err_output << " (MySQL error code: " << e.getErrorCode();
+        SQL_err_output << ", SQLState: " << e.getSQLState() << " )" << std::endl;
 
-        // Free connection pointer
-        delete connection;
+        std::cerr << SQL_err_output << std::endl << std::endl;
+        SetResponse(SQL_err_output.str(), response);
+        return RequestHandler::Status::DATABASE_ERROR;
     }
 
     return RequestHandler::Status::OK;
