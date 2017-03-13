@@ -11,7 +11,7 @@ path /private StaticFileHandler {
   user leslie lam;
   user stella chung;
   user thomas choi;
-  timeout 60; #This number is in seconds
+  timeout 240; #This number is in seconds
 }
 
 path /echo EchoHandler {}

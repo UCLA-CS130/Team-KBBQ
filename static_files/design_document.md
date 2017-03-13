@@ -8,6 +8,57 @@ Link: <https://ec2-54-202-60-252.us-west-2.compute.amazonaws.com/static/markdown
 * This page is also displayed using markdown feature!
 
 ## Sessions and Authentication
+### Feature Description
+The feature allows files to be only accessed upon authentication by certain users. Once authenticated, a cookie is created and is only valid within a certain time limit. Once the time passes, the user must authenticate again to access the private files. Multiple users are supported and can access the files at the same time.
+
+### Implementation
+The is an addon to the StaticFileHandler. The core functionality uses the HandleRequest method to send the response. To create a cookie, a random string is generated and then set as a HTTP header. When the server receives a request it checks the header to make sure the cookie is still valid.
+
+#### Configuration
+The folder set to be private and users who have access are set in the config file. It is identical to the regular StaticFileHandler config, except there is a timeout and users. Each user must have a username and password, and the timeout must be a number.
+
+#### Basic functionality
+On initialization, the users and timeout are stored. When handling a request, the uri is checked to see if it "login.html". If the uri is about login or just a regular static file, the next part is skipped.
+
+If the request is for a private file, the cookie is checked with the check_cookie method. It checks if the cookie from request is already stored or not. If it is, then its creation time is retrieved. If the cookie is not there, time is set to 0. If the current time - cookie time > timeout, redirect to the login page and delete the old cookie.
+
+If the request method is POST and is coming from "login.html", extract the username and password from the body. If the user and password are correct, then add the cookie with the method add_cookie. This method generates a random alphanumeric string of length 20 and adds the string to the cookie map along with the current time. Afterwards, redirect to the original uri and set the cookie in the HTTP header.
+
+### Walkthrough
+Link: <http://ec2-54-202-60-252.us-west-2.compute.amazonaws.com/private/login.html>
+
+Login page to access private files
+
+Link 2: <http://ec2-54-202-60-252.us-west-2.compute.amazonaws.com/private/pikachu.html>
+
+Direct link to private file, which will redirect to login
+
+The three users who can authenticate are the following:
+
+<table>
+  <tr>
+    <th>username</th>
+    <th>password</th>
+  </tr>
+  <tr>
+    <td>leslie</td>
+    <td>lam</td>
+  </tr>
+  <tr>
+    <td>stella</td>
+    <td>chung</td>
+  </tr>
+  <tr>
+    <td>thomas</td>
+    <td>choi</td>
+  </tr>
+</table>
+
+1. Access link 2, and redirect to the login page
+2. Authenticate using one of the three users, and redirect back to the picture
+3. Demo the Database Interface, while cookie still valid, or
+4. Wait 4 minutes, which is the timeout time
+5. Attempt to access link 2 again, which will redirect to the login page
 
 ## Database Interface
 ### Feature Description
