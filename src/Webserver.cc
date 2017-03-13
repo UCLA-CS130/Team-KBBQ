@@ -155,8 +155,8 @@ void Webserver::session(tcp::socket sock) {
             size_t request_length = sock.read_some(boost::asio::buffer(request), error);
 
             const std::unique_ptr<Request> req = Request::Parse(std::string(request, request_length));
-            
-  	    RequestHandler* handler = get_handler(req->uri());
+
+            RequestHandler* handler = get_handler(req->uri());
             Response resp;
 
             if (handler->HandleRequest(*req, &resp) == RequestHandler::Status::FILE_NOT_FOUND) {
@@ -197,17 +197,12 @@ std::string Webserver::find_prefix(std::string uri) {
         std::string map = it.first;
 
         if (prefix.find(map) == 0 && (prefix.find("/", map.length()) == map.length() || 
-            map.length() == prefix.length())) {
+            map.length() == prefix.length() || map.length() == 1)) {
             if (map.length() > longest.length()) {
                 longest = map;
             }
         }
     }
-
-    //Needed for requests lke /js/plugins/example.js i
-    //This is hacky but works
-    if (longest == "")
-      longest="/";
 
     return longest;
 }

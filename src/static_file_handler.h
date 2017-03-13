@@ -2,6 +2,8 @@
 #define STATIC_FILE_HANDLER_H
 
 #include "request_handler.h"
+#include <time.h>
+#include <unordered_map>
 
 // FILE TYPES
 const std::string TYPE_JPEG  = "image/jpeg";
@@ -21,10 +23,17 @@ class StaticFileHandler : public RequestHandler {
 
     std::string get_content_type(const std::string &filename);
     Response::ResponseCode get_file(const std::string& file_path, std::string* contents);
+    std::string gen_cookie(std::string::size_type length);
+    std::string add_cookie(std::string old_cookie);
+    bool check_cookie(std::string cookie, Response* response);
 
  private:
     std::string prefix;
     std::string root;
+    time_t timeout;
+    std::string original_uri;
+    std::unordered_map<std::string, time_t> cookie_map;
+    std::unordered_map<std::string, std::string> user_map;
 };
 
 REGISTER_REQUEST_HANDLER(StaticFileHandler);
