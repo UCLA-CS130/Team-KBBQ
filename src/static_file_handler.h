@@ -29,11 +29,10 @@ class StaticFileHandler : public RequestHandler {
  private:
     std::string prefix;
     std::string root;
-    std::string username;
-    std::string password;
     time_t timeout;
     std::string original_uri;
     std::unordered_map<std::string, time_t> cookie_map;
+    std::unordered_map<std::string, std::string> user_map;
 };
 
 REGISTER_REQUEST_HANDLER(StaticFileHandler);

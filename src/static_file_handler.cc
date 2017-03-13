@@ -44,20 +44,35 @@ std::string StaticFileHandler::get_content_type(const std::string& filename_str)
 RequestHandler::Status StaticFileHandler::Init(const std::string& uri_prefix, const NginxConfig& config) {
     prefix = uri_prefix;
     root = "";
-    username = "";
-    password = "";
-    timeout = -1;
+    timeout = 0;
 
     // Iterate through the config block to find the root mapping.
     for (size_t i = 0; i < config.statements_.size(); i++) {
         std::shared_ptr<NginxConfigStatement> stmt = config.statements_[i];
-        // Ignore all configs that are not setting root.
-        if (stmt->tokens_.size() != 2) {
-            continue;
-        } else if (stmt->tokens_[0] == "root") {
+
+        size_t size = stmt->tokens_.size();
+        std::string first_token = "";
+        std::string second_token = "";
+        std::string third_token = "";
+
+        // Check statement size
+        if (size > 1 && size < 4) {
+            first_token = stmt->tokens_[0];
+            second_token = stmt->tokens_[1];
+            if (size == 3) {
+                third_token = stmt->tokens_[2];
+            }
+        }
+        else {
+            // Error: The root value has already been set.
+            std::cerr << "Error: Incorrect statement size for " << uri_prefix <<".\n";
+            return RequestHandler::Status::INVALID_CONFIG;
+        }
+
+        if (first_token == "root" && third_token == "") {
             // Set the root value.
             if (root.empty()) {
-                root = stmt->tokens_[1];
+                root = second_token;
                 if (root.back() == '/') {
                     // Remove trailing slash from root
                     root = root.substr(0, root.length()-1);
@@ -67,30 +82,23 @@ RequestHandler::Status StaticFileHandler::Init(const std::string& uri_prefix, co
                 std::cerr << "Error: Multiple root mappings specified for " << uri_prefix <<".\n";
                 return RequestHandler::Status::INVALID_CONFIG;
             }
-        } else if (stmt->tokens_[0] == "username") {
-            // Set the username value.
-            if (username.empty()) {
-                username = stmt->tokens_[1];
+        } else if (first_token == "user" && third_token != "") {
+            std::unordered_map<std::string, std::string>::const_iterator found = user_map.find(second_token);
+
+            // Check if user already exists
+            if (found == user_map.end()) {
+                user_map[second_token] = third_token;
             } else {
-                // Error: The username value has already been set.
-                std::cerr << "Error: Multiple username mappings specified for " << uri_prefix <<".\n";
+                // Error: The user has already been set.
+                std::cerr << "Error: Multiple user mappings specified for " << uri_prefix <<".\n";
                 return RequestHandler::Status::INVALID_CONFIG;
             }
-        } else if (stmt->tokens_[0] == "password") {
-            // Set the password value.
-            if (password.empty()) {
-                password = stmt->tokens_[1];
-            } else {
-                // Error: The password value has already been set.
-                std::cerr << "Error: Multiple password mappings specified for " << uri_prefix <<".\n";
-                return RequestHandler::Status::INVALID_CONFIG;
-            }
-        } else if (stmt->tokens_[0] == "timeout") {
+        } else if (first_token == "timeout" && third_token == "") {
             // Set the timeout value.
-            if (timeout == -1) {
+            if (timeout == 0) {
                 bool is_number = (stmt->tokens_[1].find_first_not_of("1234567890") == std::string::npos);
                 if (is_number) {
-                    timeout = std::stoi(stmt->tokens_[1]);
+                    timeout = std::stoi(second_token);
                 } else {
                     // Error: The timeout is not a number.
                     std::cerr << "Error: Timeout is not a number.\n";
@@ -110,9 +118,9 @@ RequestHandler::Status StaticFileHandler::Init(const std::string& uri_prefix, co
         return RequestHandler::Status::INVALID_CONFIG;
     }
 
-    if ((username.empty() || password.empty() || timeout < 1) && !(username.empty() && password.empty() && timeout < 1)) {
-        // Error: Either all empty or all initialized.
-        std::cerr << "Error: The three variables need to be all empty or all initialized.\n";
+    if ((user_map.size() == 0 || timeout < 1) && !(user_map.size() == 0 && timeout < 1)) {
+        // Error: Either all initialized or uninitialized.
+        std::cerr << "Error: The users and timeout need to be all initialized or all uninitialized.\n";
         std::cerr << uri_prefix;
         return RequestHandler::Status::INVALID_CONFIG;
     }
@@ -135,7 +143,7 @@ RequestHandler::Status StaticFileHandler::HandleRequest(const Request& request, 
     }
 
     // If serving regular static files or the request is about login.html, skip
-    if (!username.empty() && !redirect) {
+    if (timeout != 0 && !redirect) {
         bool cookie_ok = check_cookie(request.cookie(), response);
 
         if (!cookie_ok) {
@@ -155,7 +163,9 @@ RequestHandler::Status StaticFileHandler::HandleRequest(const Request& request, 
         size_t third = body.find("=", second);
         std::string pass = body.substr(third + 1);
 
-        if (user == username && pass == password) {
+        std::unordered_map<std::string, std::string>::const_iterator found = user_map.find(user);
+
+        if (found != user_map.end() && pass == found->second) {
             // Generate and then add the cookie to cookie_map
             std::string new_cookie = add_cookie(request.cookie());
 

@@ -8,9 +8,10 @@ path /static StaticFileHandler {
 
 path /private StaticFileHandler {
   root private_files;
-  username root;
-  password password;
-  timeout 10; #This number is in seconds
+  user leslie lam;
+  user stella chung;
+  user thomas choi;
+  timeout 60; #This number is in seconds
 }
 
 path /echo EchoHandler {}

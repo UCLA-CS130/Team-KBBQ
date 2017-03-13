@@ -95,7 +95,7 @@ TEST_F(StaticFileHandlerTests, DuplicateRoot) {
 
 // Valid Init for private files
 TEST_F(StaticFileHandlerTests, PrivateInit) {
-    ASSERT_TRUE(ParseString("root /foo/bar;\nusername root;\npassword password;\ntimeout 10;"));
+    ASSERT_TRUE(ParseString("root /foo/bar;\nuser root password;\ntimeout 10;"));
 
     StaticFileHandler f_handler;
     RequestHandler::Status status = f_handler.Init("/private", out_config_);
@@ -105,7 +105,7 @@ TEST_F(StaticFileHandlerTests, PrivateInit) {
 
 // Missing Mapping
 TEST_F(StaticFileHandlerTests, MissingMapping) {
-    ASSERT_TRUE(ParseString("root /foo/bar;\nusername root;\ntimeout 10;"));
+    ASSERT_TRUE(ParseString("root /foo/bar;\ntimeout 10;"));
 
     StaticFileHandler f_handler;
     RequestHandler::Status status = f_handler.Init("/private", out_config_);
@@ -115,7 +115,7 @@ TEST_F(StaticFileHandlerTests, MissingMapping) {
 
 // Duplicate Mapping
 TEST_F(StaticFileHandlerTests, DuplicateMapping) {
-    ASSERT_TRUE(ParseString("root /foo/bar;\nusername root;\npassword password;\ntimeout 10;\ntimeout 10;"));
+    ASSERT_TRUE(ParseString("root /foo/bar;\nuser root password;\nuser root pass;\ntimeout 10;"));
 
     StaticFileHandler f_handler;
     RequestHandler::Status status = f_handler.Init("/private", out_config_);
@@ -221,7 +221,7 @@ TEST(StaticFileHandlerHelperTests, DuplicateCookie) {
 
 // No cookie leads to redirect
 TEST_F(StaticFileHandlerTests, NewCookie) {
-    ASSERT_TRUE(ParseString("root /foo/bar;\nusername root;\npassword password;\ntimeout 10;"));
+    ASSERT_TRUE(ParseString("root /foo/bar;\nuser root password;\ntimeout 10;"));
 
     StaticFileHandler f_handler;
     RequestHandler::Status status = f_handler.Init("/private", out_config_);
@@ -238,7 +238,7 @@ TEST_F(StaticFileHandlerTests, NewCookie) {
 
 // Cookie is valid and no redirect
 TEST_F(StaticFileHandlerTests, ValidCookie) {
-    ASSERT_TRUE(ParseString("root /foo/bar;\nusername root;\npassword password;\ntimeout 10;"));
+    ASSERT_TRUE(ParseString("root /foo/bar;\nuser root password;\ntimeout 10;"));
 
     StaticFileHandler f_handler;
     RequestHandler::Status status = f_handler.Init("/private", out_config_);
@@ -259,7 +259,7 @@ TEST_F(StaticFileHandlerTests, ValidCookie) {
 
 // Expired cookie leads to redirect
 TEST_F(StaticFileHandlerTests, InvalidCookie) {
-    ASSERT_TRUE(ParseString("root /foo/bar;\nusername root;\npassword password;\ntimeout 1;"));
+    ASSERT_TRUE(ParseString("root /foo/bar;\nuser root password;\ntimeout 1;"));
 
     StaticFileHandler f_handler;
     RequestHandler::Status status = f_handler.Init("/private", out_config_);
@@ -286,7 +286,7 @@ TEST_F(StaticFileHandlerTests, HandleRedirect) {
     EXPECT_CALL(processed_request, uri()).Times(1).WillOnce(Return("/private/test_file.txt"));
     //EXPECT_CALL(processed_request, cookie()).Times(1).WillOnce(Return(""));
 
-    ASSERT_TRUE(ParseString("root ./; username root; password password; timeout 10;"));
+    ASSERT_TRUE(ParseString("root ./; user root password; timeout 10;"));
 
     // Create a login file
     std::ofstream login_file("login.html");
@@ -321,7 +321,7 @@ TEST_F(StaticFileHandlerTests, HandleLogin) {
     EXPECT_CALL(processed_request, body()).Times(1).WillOnce(Return("username=root&password=password"));
     EXPECT_CALL(processed_request, cookie()).Times(1).WillOnce(Return(""));
 
-    ASSERT_TRUE(ParseString("root ./; username root; password password; timeout 1000;"));
+    ASSERT_TRUE(ParseString("root ./; user root password; timeout 1000;"));
 
     // Create a login file
     std::ofstream login_file("login.html");
@@ -364,6 +364,45 @@ TEST_F(StaticFileHandlerTests, HandleLogin) {
     Response new_resp;
     ASSERT_EQ(RequestHandler::Status::OK, f_handler.HandleRequest(new_request, &new_resp));
     EXPECT_EQ("HTTP/1.0 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 8\r\n\r\nfoo bar\n", new_resp.ToString());
+    remove("login.html");
+    remove("test_file.txt");
+}
+
+// Wrong password means no cookie set
+TEST_F(StaticFileHandlerTests, HandleBadPassword) {
+    // Part 1: Set the cookie by entering the correct username and password
+    EXPECT_CALL(processed_request, uri()).Times(1).WillOnce(Return("/private/login.html"));
+    EXPECT_CALL(processed_request, method()).Times(1).WillOnce(Return("POST"));
+    EXPECT_CALL(processed_request, body()).Times(1).WillOnce(Return("username=root&password=pass"));
+
+    ASSERT_TRUE(ParseString("root ./; user root password; timeout 1000;"));
+
+    // Create a login file
+    std::ofstream login_file("login.html");
+    std::string log = "<form action=\"\" method=\"post\">"
+    "Username: <input type=\"text\" name=\"username\"><br>"
+    "Password: <input type=\"text\" name=\"password\"/>"
+    "<input type=\"submit\" value=\"Submit\"/></form>";
+
+    login_file << log << std::endl;
+    login_file.close();
+
+    // Create a test file
+    std::ofstream test_file("test_file.txt");
+    test_file << "foo bar" << std::endl;
+    test_file.close();
+
+    // Initialize handler for uri prefix "/private"
+    StaticFileHandler f_handler;
+    Response resp;
+    ASSERT_EQ(RequestHandler::Status::OK, f_handler.Init("/private", out_config_));
+
+    // Handle the first mock request
+    ASSERT_EQ(RequestHandler::Status::OK, f_handler.HandleRequest(processed_request, &resp));
+
+    // Get the cookie from the response
+    std::string cookie_header = "Set-Cookie: private=";
+    EXPECT_EQ(std::string::npos, resp.ToString().find(cookie_header));
     remove("login.html");
     remove("test_file.txt");
 }
