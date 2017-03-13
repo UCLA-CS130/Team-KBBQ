@@ -47,13 +47,23 @@ RequestHandler::Status DatabaseHandler::Init(const std::string& uri_prefix, cons
                 password_ = stmt->tokens_[1];
             } else {
                 // Error: The password value has already been set.
-                std::cerr << "Error: Multiple password specified for database.\n";
+                std::cerr << "Error: Multiple passwords specified for database.\n";
                 return RequestHandler::Status::INVALID_CONFIG;
             }
         } 
     }
 
+    if (database_ == "") {
+        std::cerr << "Error: No database specified.\n";
+        return RequestHandler::Status::INVALID_CONFIG;
+    }
+
     driver_ = sql::mysql::get_mysql_driver_instance();
+    if (!driver_) {
+        std::cerr << "Error: Could not get MySQL driver instance.\n";
+        return RequestHandler::Status::DATABASE_ERROR;
+    }
+
     return RequestHandler::Status::OK;
 }
 
@@ -63,31 +73,27 @@ RequestHandler::Status DatabaseHandler::HandleRequest(const Request& request, Re
 
     if (!connection) {
         // Connection Failed
-        ErrorResponse(FAILED_CONNECTION, response);
+        std::cerr << FAILED_CONNECTION << std::endl << std::endl;
+        SetResponse(FAILED_CONNECTION, response);
         return RequestHandler::Status::DATABASE_ERROR;
     } else {
-        // Set the database;
-        connection->setSchema(database_);
-
-        // URI = /database?query=select+name+from+actors
         // Parse query from URI request
         std::string query = ExtractQuery(request.uri());
         if (query == "") {
             // No query found in URI
-            ErrorResponse(PARAM_ERROR, response);
+            std::cerr << PARAM_ERROR << std::endl << std::endl;
+            SetResponse(PARAM_ERROR, response);
             return RequestHandler::Status::DATABASE_ERROR;
         }
 
         try {
+            // Set the database
+            connection->setSchema(database_);
             std::cout << "Executing query: " << query << std::endl;
             std::string output = ExecuteQuery(connection, query);
-            std::cout << "Database results: " << std::endl << output << std::endl << std::endl;
 
-            // Send response
-            response->SetStatus(Response::ResponseCode::OK);
-            response->AddHeader("Content-Type", "text/plain");
-            response->AddHeader("Content-Length", std::to_string(output.length()));
-            response->SetBody(output);
+            std::cout << "Database results: " << std::endl << output << std::endl << std::endl;
+            SetResponse(output, response);
 
         } catch (sql::SQLException &e) {
             std::stringstream SQL_err_output;
@@ -96,7 +102,8 @@ RequestHandler::Status DatabaseHandler::HandleRequest(const Request& request, Re
             SQL_err_output << " (MySQL error code: " << e.getErrorCode();
             SQL_err_output << ", SQLState: " << e.getSQLState() << " )" << std::endl;
 
-            ErrorResponse(SQL_err_output.str(), response);
+            std::cerr << SQL_err_output << std::endl << std::endl;
+            SetResponse(SQL_err_output.str(), response);
             return RequestHandler::Status::DATABASE_ERROR;
         }
 
@@ -107,14 +114,12 @@ RequestHandler::Status DatabaseHandler::HandleRequest(const Request& request, Re
     return RequestHandler::Status::OK;
 }
 
-void DatabaseHandler::ErrorResponse(std::string err_msg, Response* response) {
+void DatabaseHandler::SetResponse(std::string response_msg, Response* response) {
     response->SetStatus(Response::ResponseCode::OK);
     response->AddHeader("Content-Type", "text/plain");
-    response->AddHeader("Content-Length", std::to_string(err_msg.length()));
-    response->SetBody(err_msg);
-    std::cerr << err_msg << std::endl;
+    response->AddHeader("Content-Length", std::to_string(response_msg.length()));
+    response->SetBody(response_msg);
 }
-
 
 // Adapted from DLib: http://dlib.net/dlib/server/server_http.cpp.html
 unsigned char DatabaseHandler::FromHex(unsigned char ch) {
@@ -152,12 +157,16 @@ const std::string DatabaseHandler::URLDecode(const std::string& str) {
 }
 
 const std::string DatabaseHandler::ExtractQuery(const std::string& uri) {
+    // Example URI: /database?query=select+name+from+actors
     std::string param = "query=";
+
+    // Query starts after "query="
     std::size_t query_start = uri.find(param);
     if (query_start == std::string::npos) {
         // No query parameter
         return "";
     }
+
     // Decode the URI
     return URLDecode(uri.substr(query_start + param.length()));
 }
@@ -183,7 +192,7 @@ const std::string DatabaseHandler::GetJSONResults(sql::Statement *stmt) {
      */
     std::string result_string = "{\n";
 
-    // Column names
+    // Print column names
     result_string += "\"cols\": [";
     for (size_t i = 1; i <= col_meta->getColumnCount(); i++) {
         std::string col_name = col_meta->getColumnName(i);
@@ -196,7 +205,7 @@ const std::string DatabaseHandler::GetJSONResults(sql::Statement *stmt) {
     }
     result_string += "],\n\"data\": {\n";
 
-    // Row values
+    // Print row values
     while (results->next()) {
         int row_id = results->getRow();
         result_string += "\"" + std::to_string(row_id) + "\": [";

@@ -16,7 +16,7 @@ class DatabaseHandler : public RequestHandler {
 
     virtual RequestHandler::Status HandleRequest(const Request& request, Response* response);
 
-    void ErrorResponse(std::string err_msg, Response* response);
+    void SetResponse(std::string response_msg, Response* response);
 
     const std::string ExtractQuery(const std::string& uri);
 
