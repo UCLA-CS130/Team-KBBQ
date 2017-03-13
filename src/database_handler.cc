@@ -228,7 +228,7 @@ const std::string DatabaseHandler::GetJSONResults(sql::Statement *stmt) {
     }
     result_string += "}\n}";
 
-    // Free resultSet and metadata pointer
+    // Free resultSet
     delete results;
 
     return result_string;
